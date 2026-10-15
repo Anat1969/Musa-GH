@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { MODES, MODE_IDS, splitSource, groupProjects, fmtDate } from "../data.js";
 import { go, href } from "../router.js";
-import { Frame, ModeTag, Label, Loading } from "./ui.jsx";
+import { Label, Loading } from "./ui.jsx";
+import Series, { seriesCount } from "./Series.jsx";
 
 export default function Archive({ gens, status, filter, retry }) {
   const [q, setQ] = useState("");
@@ -10,16 +11,17 @@ export default function Archive({ gens, status, filter, retry }) {
 
   const projects = useMemo(() => {
     const term = q.trim();
-    const list = gens.filter(g => (!mode || g.mode === mode) && (!term || g.source.includes(term) || g.hebrew_interpretation.includes(term)));
-    return groupProjects(list);
+    const list = gens.filter(g => !term || g.source.includes(term) || g.hebrew_interpretation.includes(term));
+    /* הסדרה תמיד שלמה בתצוגה. הסינון בוחר מקורות שיש להם את הקריאה הזאת */
+    return groupProjects(list).filter(p => !mode || p.items.some(g => g.mode === mode));
   }, [gens, mode, q]);
 
   return (
     <div className="page archive">
       <header className="page-head">
         <Label n="02">ארכיון</Label>
-        <h1>פרויקטים ומחקרים</h1>
-        <p className="lead">כל מקור הוא פרויקט. בכל פרויקט, המחקרים שנעשו עליו בשלושת אופני התרגום.</p>
+        <h1>מקורות וקריאות</h1>
+        <p className="lead">כל מקור הוא סדרה של שלוש קריאות: קריאה 1, לוח השראה. קריאה 2, המחשה. קריאה 3, מרחב מחודש. קריאה שחסרה מסומנת, ואפשר להשלים אותה.</p>
       </header>
 
       <div className="toolbar">
@@ -28,7 +30,7 @@ export default function Archive({ gens, status, filter, retry }) {
           {MODE_IDS.map(id => (
             <a key={id} role="tab" aria-selected={mode === id} className={`chip chip-mode mode-${id}${mode === id ? " on" : ""}`}
               href={href("archive", id)} onClick={e => { e.preventDefault(); go("archive", id); }} data-filter={id}>
-              <i aria-hidden="true" />{MODES[id].name}
+              <i aria-hidden="true" />{MODES[id].full}
             </a>
           ))}
         </div>
@@ -43,7 +45,7 @@ export default function Archive({ gens, status, filter, retry }) {
       )}
       {status === "ready" && projects.length === 0 && (
         <div className="state">
-          {gens.length ? "אין מחקרים שמתאימים לסינון." : "הארכיון עדיין ריק."}
+          {gens.length ? "אין מקורות שמתאימים לסינון." : "הארכיון עדיין ריק."}
           <a className="btn btn-dark" href={href("studio")} onClick={e => { e.preventDefault(); go("studio"); }}>להתחיל בסטודיו</a>
         </div>
       )}
@@ -57,25 +59,18 @@ export default function Archive({ gens, status, filter, retry }) {
               transition={{ duration: 0.45, delay: Math.min(i, 4) * 0.05 }}>
               <header className="project-head">
                 <div className="project-name">
-                  <span className="mono muted">פרויקט {String(projects.length - i).padStart(2, "0")}</span>
+                  <span className="mono muted">מקור {String(projects.length - i).padStart(2, "0")}</span>
                   <h2>{s.title}</h2>
                   {s.by && <span className="project-by">{s.by}</span>}
                 </div>
                 <div className="project-side">
-                  <span className="mono muted">{p.items.length} מחקרים · {fmtDate(p.latest)}</span>
-                  <a className="btn" href={href("studio", p.source)} onClick={e => { e.preventDefault(); go("studio", p.source); }} data-act="add-study">מחקר נוסף</a>
+                  <span className={`series-count${seriesCount(p.items) === 3 ? " is-full" : ""}`} data-count={seriesCount(p.items)}>
+                    {seriesCount(p.items) === 3 ? "שלוש הקריאות" : `${seriesCount(p.items)} מתוך 3 קריאות`}
+                  </span>
+                  <span className="mono muted">{fmtDate(p.latest)}</span>
                 </div>
               </header>
-              <div className="study-row">
-                {p.items.map(g => (
-                  <a key={g.id} className="study-card" href={href("s", g.id)} onClick={e => { e.preventDefault(); go("s", g.id); }} data-study={g.id}>
-                    <Frame src={g.image_url} alt={`${MODES[g.mode]?.name}: ${s.title}`} ratio="4 / 3" lines={false}>
-                      <span className="study-hover"><span>{g.hebrew_interpretation}</span></span>
-                    </Frame>
-                    <span className="study-meta"><ModeTag mode={g.mode} /><span className="mono muted">{fmtDate(g.created_at)}</span></span>
-                  </a>
-                ))}
-              </div>
+              <Series items={p.items} />
             </motion.section>
           );
         })}

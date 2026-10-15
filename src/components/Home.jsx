@@ -186,10 +186,10 @@ function SameSource({ triads }) {
   const s = splitSource(t.source);
   return (
     <section className="compare same-source" aria-labelledby="same-source-t">
-      <Label n="III">שלושה אופני תרגום</Label>
+      <Label n="III">שלוש קריאות</Label>
       <h2 id="same-source-t">אותו מקור, שלוש קריאות</h2>
       <p className="compare-lead">
-        ההשראה קבועה, ורק אופן התרגום משתנה. לפי הסדר: מהחומרים, אל המקום שבו המקור חי, ומשם אל בית של היום.
+        ההשראה קבועה, ורק הקריאה משתנה. קריאה 1 אוספת את החומרים, קריאה 2 מראה את המקום שבו המקור חי, וקריאה 3 מתרגמת אותו לבית של היום.
       </p>
       <div className="compare-pick">
         <span className="mono muted">המקור</span>
@@ -216,7 +216,7 @@ function SameSource({ triads }) {
             return (
               <a key={id} className={`ccard mode-${id}`} href={href("s", g.id)} onClick={e => { e.preventDefault(); go("s", g.id); }} data-mode-card={id}>
                 <Frame src={g.image_url} alt={`${m.name}: ${s.title}`} ratio="4 / 3" />
-                <span className="ccard-top"><span className="mono">{m.n}</span><span className="mono muted" dir="ltr">{m.en}</span></span>
+                <span className="ccard-top"><span className="mono">{m.reading}</span><span className="mono muted" dir="ltr">{m.en}</span></span>
                 <span className="ccard-name">{m.name}</span>
                 <span className="ccard-line">{m.line}</span>
                 <span className="ccard-interp">{g.hebrew_interpretation}</span>
@@ -242,14 +242,14 @@ function SameMode({ projects }) {
       <Label n="IV">שלושה מקורות</Label>
       <h2 id="same-mode-t">אותה קריאה, שלושה מקורות</h2>
       <p className="compare-lead">
-        עכשיו האופן קבוע, ולכן ההבדל בין התמונות הוא ההבדל בין המקורות עצמם: החומר, האור והשקט של כל אחד.
+        עכשיו הקריאה קבועה, ולכן ההבדל בין התמונות הוא ההבדל בין המקורות עצמם: החומר, האור והשקט של כל אחד.
       </p>
       <div className="compare-pick">
         <span className="mono muted">האופן</span>
         <div className="chips" role="tablist" aria-label="בחירת אופן">
           {MODE_IDS.map(id => (
             <button key={id} role="tab" aria-selected={id === mode} className={`chip chip-mode mode-${id}${id === mode ? " on" : ""}`} onClick={() => setMode(id)} data-same-mode={id}>
-              <i aria-hidden="true" />{MODES[id].name}
+              <i aria-hidden="true" />{MODES[id].full}
             </button>
           ))}
         </div>
@@ -262,7 +262,7 @@ function SameMode({ projects }) {
             return (
               <a key={g.id} className={`ccard mode-${mode}`} href={href("s", g.id)} onClick={e => { e.preventDefault(); go("s", g.id); }} data-source-card>
                 <Frame src={g.image_url} alt={`${m.name}: ${s.title}`} ratio="4 / 3" />
-                <span className="ccard-top"><span className="mono">{m.name}</span><span className="mono muted">{fmtDate(g.created_at)}</span></span>
+                <span className="ccard-top"><span className="mono">{m.full}</span><span className="mono muted">{fmtDate(g.created_at)}</span></span>
                 <span className="ccard-name">{s.title}</span>
                 <span className="ccard-line">{s.by || "\u00a0"}</span>
                 <span className="ccard-interp">{g.hebrew_interpretation}</span>

@@ -18,19 +18,19 @@ export const PROJECT = [
 
 export const MODES = {
   board: {
-    id: "board", n: "01", name: "לוח השראה", en: "Inspiration board", axis: "חומר",
+    id: "board", n: "01", reading: "קריאה 1", full: "קריאה 1: לוח השראה", name: "לוח השראה", en: "Inspiration board", axis: "חומר",
     line: "שדה של חומרים, אור ופרגמנטים מרחביים.",
     body: "לא קולאז׳ אלא שדה: דוגמאות חומר, מחקרי אור, סף, זווית תקרה. הכול נבחר לפי התהודה עם העולם הפנימי של המקור.",
     when: "בשלב הרעיון, לפני שיש מרחב.",
   },
   illustration: {
-    id: "illustration", n: "02", name: "המחשה", en: "Illustration", axis: "מקום",
+    id: "illustration", n: "02", reading: "קריאה 2", full: "קריאה 2: המחשה", name: "המחשה", en: "Illustration", axis: "מקום",
     line: "המרחב שבו המקור חי, בזמנו ובמקומו.",
     body: "חדר אינטימי ולא הרואי. חומרים שנושאים זיכרון, חפצים שהונחו באמצע מחשבה, אור אחד שמגיע מכיוון אחד.",
     when: "כדי להבין את העולם של היוצר.",
   },
   art: {
-    id: "art", n: "03", name: "מרחב מחודש", en: "Renewed space", axis: "תרגום",
+    id: "art", n: "03", reading: "קריאה 3", full: "קריאה 3: מרחב מחודש", name: "מרחב מחודש", en: "Renewed space", axis: "תרגום",
     line: "אותו DNA, מתורגם לבית של היום.",
     body: "לא שחזור אלא תרגום: אותו תדר רגשי, בדיוק עכשווי. מרחב מגורים שקט שאפשר להציג כהצעה ללקוח.",
     when: "כשצריך כיוון לתכנון אמיתי.",
@@ -41,8 +41,8 @@ export const MODE_IDS = ["board", "illustration", "art"];
 export const STEPS = [
   { n: "01", t: "מקור", d: "כותבים שם של ספר, שיר, יוצר או מחשבה. כמה מילים מספיקות. שם היוצר ליד שם היצירה מדייק את הקריאה." },
   { n: "02", t: "קריאה", d: "Claude קורא את המקור כמו שאדריכלית קוראת אתר: איזה חומר, איזה אור, איזה קנה מידה ואיזה שקט יש בו." },
-  { n: "03", t: "תרגום", d: "בוחרים אופן: לוח השראה, המחשה או מרחב מחודש. מהקריאה נכתב פרומפט חזותי, ונוצר צילום אדריכלי." },
-  { n: "04", t: "ארכיון", d: "כל מחקר נשמר בפרויקט לפי המקור, עם הזהות המרחבית, הפרשנות והפרומפט. אפשר להוסיף לו מחקרים באופנים האחרים." },
+  { n: "03", t: "תרגום", d: "כל מקור נקרא בשלוש קריאות: קריאה 1, לוח השראה. קריאה 2, המחשה. קריאה 3, מרחב מחודש. בכל קריאה נכתב פרומפט חזותי ונוצר צילום אדריכלי." },
+  { n: "04", t: "ארכיון", d: "המקור נשמר כסדרה של שלוש הקריאות, עם הזהות המרחבית, הפרשנות והפרומפט. קריאה שחסרה מסומנת, ואפשר להשלים אותה." },
 ];
 
 /*
@@ -110,6 +110,17 @@ export function splitSource(source = "") {
 export function fmtDate(iso) {
   try { return new Date(iso).toLocaleDateString("he-IL", { day: "numeric", month: "long", year: "numeric" }); }
   catch { return ""; }
+}
+
+/* שלוש הקריאות של מקור אחד: לכל אופן הגרסה האחרונה, ומספר הגרסאות */
+export function readingsOf(items) {
+  const out = {};
+  for (const id of MODE_IDS) {
+    const list = items.filter(g => g.mode === id).sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+    out[id] = { latest: list[0] || null, count: list.length };
+  }
+  out.missing = MODE_IDS.filter(id => !out[id].latest);
+  return out;
 }
 
 /* מקבץ מחקרים לפרויקטים לפי המקור. הפרויקט החדש ביותר ראשון */

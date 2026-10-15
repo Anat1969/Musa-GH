@@ -1,17 +1,18 @@
 import { useMemo, useState } from "react";
-import { MODES, splitSource, fmtDate, midjourney } from "../data.js";
+import { MODES, splitSource, fmtDate, midjourney, readingsOf } from "../data.js";
 import { generate, completeImage } from "../lib/supabase.js";
-import { go, href } from "../router.js";
-import { Frame, ModeTag, Label, Loading, PromptCopy } from "./ui.jsx";
+import { go, href, studioItem } from "../router.js";
+import { ModeTag, Label, Loading, PromptCopy } from "./ui.jsx";
 import KeyMark from "./KeyMark.jsx";
 import PasteFrame from "./PasteFrame.jsx";
+import Series from "./Series.jsx";
 
 export default function Study({ id, gens, status, onCreated }) {
   const g = gens.find(x => x.id === id);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  const siblings = useMemo(() => (g ? gens.filter(x => x.source.trim() === g.source.trim() && x.id !== g.id) : []), [g, gens]);
+  const family = useMemo(() => (g ? gens.filter(x => x.source.trim() === g.source.trim()) : []), [g, gens]);
   const order = useMemo(() => gens.map(x => x.id), [gens]);
 
   if (!g) {
@@ -53,7 +54,7 @@ export default function Study({ id, gens, status, onCreated }) {
       <nav className="crumbs" aria-label="מיקום">
         <a href={href("archive")} onClick={e => { e.preventDefault(); go("archive"); }}>ארכיון</a>
         <span>{s.title}</span>
-        <span>{m.name}</span>
+        <span>{m.full}</span>
       </nav>
 
       <PasteFrame gen={g} onSaved={x => onCreated(x)} ratio="16 / 9" className="study-hero-wrap">
@@ -82,8 +83,8 @@ export default function Study({ id, gens, status, onCreated }) {
           </div>
 
           <div className="block">
-            <Label>האופן</Label>
-            <p><b>{m.name}.</b> {m.body}</p>
+            <Label>הקריאה</Label>
+            <p><b>{m.full}.</b> {m.body}</p>
           </div>
         </div>
 
@@ -98,8 +99,11 @@ export default function Study({ id, gens, status, onCreated }) {
             {!g.image_url && (
               <button className="btn btn-dark" onClick={fillImage} disabled={busy} data-act="fill-image">{busy ? "מצלם את המרחב" : "השלמת התמונה"}<KeyMark /></button>
             )}
-            <a className={`btn${g.image_url ? " btn-dark" : ""}`} href={href("studio", g.source)} onClick={e => { e.preventDefault(); go("studio", g.source); }} data-act="add-study">מחקר נוסף לפרויקט</a>
-            <button className="btn" onClick={fresh} disabled={busy} data-act="fresh">{busy ? "יוצר גרסה, בערך דקה" : "גרסה נוספת באופן הזה"}<KeyMark /></button>
+            {readingsOf(family).missing.map(id => {
+              const to = studioItem(g.source, id);
+              return <a key={id} className={`btn${g.image_url ? " btn-dark" : ""}`} href={href("studio", to)} onClick={e => { e.preventDefault(); go("studio", to); }} data-act="complete">השלמת {MODES[id].full}</a>;
+            })}
+            <button className="btn" onClick={fresh} disabled={busy} data-act="fresh">{busy ? "יוצר גרסה, בערך דקה" : `גרסה נוספת של ${m.reading}`}<KeyMark /></button>
             {g.image_url && <a className="btn" href={g.image_url} target="_blank" rel="noopener">פתיחת התמונה בגודל מלא</a>}
             {error && <p className="err" role="alert">{error}</p>}
           </div>
@@ -111,19 +115,10 @@ export default function Study({ id, gens, status, onCreated }) {
         </aside>
       </div>
 
-      {siblings.length > 0 && (
-        <section className="siblings">
-          <Label>עוד בפרויקט הזה</Label>
-          <div className="study-row">
-            {siblings.map(x => (
-              <a key={x.id} className="study-card" href={href("s", x.id)} onClick={e => { e.preventDefault(); go("s", x.id); }} data-sibling={x.id}>
-                <Frame src={x.image_url} alt={`${MODES[x.mode]?.name}: ${s.title}`} ratio="4 / 3" lines={false} />
-                <span className="study-meta"><ModeTag mode={x.mode} /><span className="mono muted">{fmtDate(x.created_at)}</span></span>
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
+      <section className="siblings">
+        <Label>שלוש הקריאות של המקור</Label>
+        <Series items={family} currentId={g.id} hover={false} />
+      </section>
     </article>
   );
 }
