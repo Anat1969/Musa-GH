@@ -11,15 +11,14 @@
 - `public/`: `logo.png` (הלוגו של ענת), `icons/` (אייקון האפליקציה: חדר, מרידיאן ושורות טקסט, בלי אותיות), `manifest.webmanifest`, `sw.js`.
 
 ## Supabase: cultura-GH בלבד (ktqmwpbzcnzkhjskqisy), פרויקט משותף
-- לא לגעת בשום דבר שאינו מתחיל ב-musa. הפרויקט "Muse Meridian Studio" (qjodikwzifgqfdbhyyhy) לא בשימוש: ענת רוצה למחוק אותו. מסד הנתונים של Lovable (fzpgcgbyhnximfmxicvi) משמש רק לנתיב הזמני של התמונות (ראו למטה).
+- לא לגעת בשום דבר שאינו מתחיל ב-musa. הפרויקט "Muse Meridian Studio" (qjodikwzifgqfdbhyyhy) לא בשימוש: ענת רוצה למחוק אותו. גם פרויקט Lovable (fzpgcgbyhnximfmxicvi) כבר לא בשימוש.
 - טבלה `musa_generations`: id, source, mode (board, illustration, art), image_url (יכול להיות null), hebrew_interpretation, visual_prompt, spatial_identity, created_at. RLS: קריאה ציבורית. כתיבה רק דרך הפונקציה (service role).
 - דלי ציבורי `musa-media` (`studies/<id>.<ext>`).
 - פונקציה `musa-generate` (המקור ב-`supabase/functions/musa-generate`): קריאה ופרשנות ב-claude-opus-5-5 (`ANTHROPIC_API_KEY`), תמונה ב-fal nano-banana-2 ובגיבוי flux schnell (`FAL_API_KEY`). מקור ואופן שכבר נחקרו חוזרים מהארכיון אלא אם `fresh: true`. `imageFor: <id>` משלים תמונה למחקר שנשמר בלי תמונה. `setImage: { id, data, type }` שומר תמונה שהודבקה ידנית (JPEG מוקטן בדפדפן, עד 8MB), בקובץ חדש `studies/<id>-pasted-<ts>.jpg`.
-- נכון ל-15.10.2026 אין ב-cultura-GH סוד בשם fal בכלל (שמות הסודות: ANTHROPIC_API_KEY, Claude-API, math-creator). זה פוגע גם ב-mahut-generate וב-architaip-fal-image.
-- נתיב זמני לתמונות (`legacyImage` בפונקציה): כשאין `FAL_API_KEY`, התמונה נוצרת דרך הפונקציה `generate` בפרויקט Lovable הישן (fzpgcgbyhnximfmxicvi), שעדיין מחזיק את מפתחות fal של ענת. הפרומפט החזותי של המחקר נשלח כמקור, והתמונה מועתקת ל-musa-media. נבדק חי: עובד.
-- הגדרה קבועה של fal (רק ענת יכולה, כי צריך את ערך המפתח): fal.ai, Dashboard, Keys, יצירת מפתח. ואז ב-Supabase: https://supabase.com/dashboard/project/ktqmwpbzcnzkhjskqisy/functions/secrets, שם `FAL_API_KEY`. אין צורך בפריסה מחדש: כל הפונקציות קוראות את הסוד בכל קריאה.
-- **לא למחוק את פרויקט Lovable לפני שמוגדר `FAL_API_KEY` ב-cultura-GH.** אחרי שהמפתח מוגדר, הנתיב הזמני לא מופעל, ואפשר למחוק את Lovable ולהסיר את `legacyImage`.
-- אם גם הנתיב הזמני נכשל, המחקר נשמר בלי תמונה, עם הודעה ברורה, ובדף המחקר יש "השלמת התמונה".
+- מפתח fal: ענת הגדירה ב-15.10.2026 את הסוד `FAL_LM_API_KEY` (ויש גם סוד בשם `Muza` עם אותו ערך בדיוק). הפונקציה קוראת `FAL_API_KEY`, ואם אין, כל סוד ששמו מכיל fal. נבדק חי: fal מחזיר תמונה, ומחקר חדש נוצר עם תמונה מ-nano-banana-2. גם mahut-generate ו-architaip-fal-image מוצאות אותו (אותה סריקת שמות).
+- nano-banana-2 מקבל `aspect_ratio: "16:9"` ומתעלם מ-`image_size` (בלי זה יצאה תמונה לאורך, 5:6). flux schnell מקבל `image_size`.
+- הנתיב הזמני דרך פרויקט Lovable הוסר. Lovable כבר לא בשימוש, ואפשר למחוק אותו.
+- בלי תמונה (fal נכשל), המחקר נשמר עם הודעה ברורה, ובדף המחקר יש "השלמת התמונה" או הדבקת תמונה.
 - `musa-import`, `musa-falcheck` ו-`musa-fill`: חד-פעמיות. הסתיימו ומחזירות 410. `musa-fill` השלימה ב-15.10.2026 את שתי התמונות שחסרו.
 - הארכיון הועבר מ-Lovable: 40 מחקרים ב-15 פרויקטים, כל התמונות הועתקו ל-musa-media.
 - בדיקה חיה של הפונקציה מהסביבה: דרך `extensions.http` ב-SQL (עם `http_set_curlopt('CURLOPT_TIMEOUT','170')`), כי supabase.co לא נגיש ישירות.
