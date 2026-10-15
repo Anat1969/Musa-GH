@@ -14,9 +14,10 @@
 - לא לגעת בשום דבר שאינו מתחיל ב-musa. הפרויקט "Muse Meridian Studio" (qjodikwzifgqfdbhyyhy) לא בשימוש: ענת רוצה למחוק אותו. מסד הנתונים של Lovable (fzpgcgbyhnximfmxicvi) משמש רק לנתיב הזמני של התמונות (ראו למטה).
 - טבלה `musa_generations`: id, source, mode (board, illustration, art), image_url (יכול להיות null), hebrew_interpretation, visual_prompt, spatial_identity, created_at. RLS: קריאה ציבורית. כתיבה רק דרך הפונקציה (service role).
 - דלי ציבורי `musa-media` (`studies/<id>.<ext>`).
-- פונקציה `musa-generate` (המקור ב-`supabase/functions/musa-generate`): קריאה ופרשנות ב-claude-opus-5-5 (`ANTHROPIC_API_KEY`), תמונה ב-fal nano-banana-2 ובגיבוי flux schnell (`FAL_API_KEY`). מקור ואופן שכבר נחקרו חוזרים מהארכיון אלא אם `fresh: true`. `imageFor: <id>` משלים תמונה למחקר שנשמר בלי תמונה.
+- פונקציה `musa-generate` (המקור ב-`supabase/functions/musa-generate`): קריאה ופרשנות ב-claude-opus-5-5 (`ANTHROPIC_API_KEY`), תמונה ב-fal nano-banana-2 ובגיבוי flux schnell (`FAL_API_KEY`). מקור ואופן שכבר נחקרו חוזרים מהארכיון אלא אם `fresh: true`. `imageFor: <id>` משלים תמונה למחקר שנשמר בלי תמונה. `setImage: { id, data, type }` שומר תמונה שהודבקה ידנית (JPEG מוקטן בדפדפן, עד 8MB), בקובץ חדש `studies/<id>-pasted-<ts>.jpg`.
 - נכון ל-15.10.2026 אין ב-cultura-GH סוד בשם fal בכלל (שמות הסודות: ANTHROPIC_API_KEY, Claude-API, math-creator). זה פוגע גם ב-mahut-generate וב-architaip-fal-image.
 - נתיב זמני לתמונות (`legacyImage` בפונקציה): כשאין `FAL_API_KEY`, התמונה נוצרת דרך הפונקציה `generate` בפרויקט Lovable הישן (fzpgcgbyhnximfmxicvi), שעדיין מחזיק את מפתחות fal של ענת. הפרומפט החזותי של המחקר נשלח כמקור, והתמונה מועתקת ל-musa-media. נבדק חי: עובד.
+- הגדרה קבועה של fal (רק ענת יכולה, כי צריך את ערך המפתח): fal.ai, Dashboard, Keys, יצירת מפתח. ואז ב-Supabase: https://supabase.com/dashboard/project/ktqmwpbzcnzkhjskqisy/functions/secrets, שם `FAL_API_KEY`. אין צורך בפריסה מחדש: כל הפונקציות קוראות את הסוד בכל קריאה.
 - **לא למחוק את פרויקט Lovable לפני שמוגדר `FAL_API_KEY` ב-cultura-GH.** אחרי שהמפתח מוגדר, הנתיב הזמני לא מופעל, ואפשר למחוק את Lovable ולהסיר את `legacyImage`.
 - אם גם הנתיב הזמני נכשל, המחקר נשמר בלי תמונה, עם הודעה ברורה, ובדף המחקר יש "השלמת התמונה".
 - `musa-import`, `musa-falcheck` ו-`musa-fill`: חד-פעמיות. הסתיימו ומחזירות 410. `musa-fill` השלימה ב-15.10.2026 את שתי התמונות שחסרו.
@@ -44,6 +45,9 @@
 - הלוגו של ענת (`public/logo.png`) הוא כפתור ההגדרות: לחיצה פותחת כרטיס עם "העתקת קישור", "שיחת הפיתוח", "פרויקט המחקר" (כשיש קישור), "התקנת האפליקציה", ופרטי הפרויקט. בלי שורת כפתורים בסרגל. את הלוגו לא חותכים ולא מסירים לו את הרקע הלבן.
 - השער מסביר מה האפליקציה ומה היא עושה: מה זה, איך זה עובד (ארבעה שלבים), שלושת האופנים ודוגמאות מהארכיון.
 - בלי מערכת כניסה והרשאות. תוצאות נשמרות משותפות לכל המכשירים.
+- הפרומפט שמור בתוך כפתורי העתקה ("העתקת הפרומפט למידג׳רני", "העתקת הפרומפט החזותי"), לא מוצג כגוש טקסט. הטקסט נפתח רק ב"הצגת הפרומפט" (`PromptCopy` ב-`ui.jsx`).
+- אפשר להדביק תמונה במסגרת עצמה, במקום התמונה שנוצרה: Ctrl+V בכל מקום בדף, גרירה או בחירת קובץ. קודם תצוגה מקדימה, ואז "שמירת התמונה" (`PasteFrame.jsx`). בדף המחקר ובתוצאה בסטודיו. נשמר דרך `musa-generate` עם `setImage`, בלי מפתח בתשלום, ולכן בלי מפתח מאיר.
+- מסגרות ופאנלים זה לצד זה באותו גובה (`align-items: stretch`).
 - קישור "פרויקט המחקר" עוד לא ניתן. כשיינתן: `LINKS.research` ב-`src/data.js`.
 
 ## מיזוג

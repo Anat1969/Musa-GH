@@ -258,8 +258,9 @@ main { padding-top: var(--nav-h); min-height: 100vh; }
 .chip-mode i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
 
 /* סטודיו */
-.studio-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: var(--g); align-items: start; }
-.studio-form { display: grid; gap: 28px; }
+/* שני הפאנלים באותו גובה: הגבוה מביניהם קובע */
+.studio-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: var(--g); align-items: stretch; }
+.studio-form { display: grid; gap: 28px; align-content: start; }
 .field { display: grid; gap: 12px; }
 .studio-form textarea {
   width: 100%; resize: vertical; min-height: 150px; padding: 16px 18px; font: inherit; font-size: clamp(1.25rem, 2vw, 1.6rem); font-weight: 200; line-height: 1.45; color: var(--ink);
@@ -327,7 +328,7 @@ main { padding-top: var(--nav-h); min-height: 100vh; }
 .crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 18px; font-size: .86rem; color: var(--ink-3); }
 .crumbs > * + *::before { content: ""; display: inline-block; width: 1px; height: 12px; background: var(--line-2); margin-inline-end: 12px; vertical-align: -1px; }
 .crumbs a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--meridian); }
-.study-hero { box-shadow: var(--sh-3); aspect-ratio: auto !important; height: clamp(240px, 58vh, 640px); }
+.study-hero-wrap .frame { box-shadow: var(--sh-3); aspect-ratio: auto !important; height: clamp(240px, 58vh, 640px); }
 .study-cap { gap: 16px; }
 .study-grid { margin-top: 40px; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--g-lg); align-items: start; }
 .study-main { display: grid; gap: 4px; }
@@ -337,9 +338,25 @@ main { padding-top: var(--nav-h); min-height: 100vh; }
 .study-side { display: grid; gap: 16px; position: sticky; top: calc(var(--nav-h) + 20px); }
 .prompt-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .prompt-head .label { margin: 0; }
-.prompt { margin-top: 12px; font-family: var(--mono); font-size: .78rem; line-height: 1.75; letter-spacing: 0; color: var(--ink-2); max-height: 280px; overflow: auto; text-align: left; padding: 14px; border-radius: var(--r-sm); background: #F5F3EF; border: 1px solid var(--line); }
+.prompt { margin-top: 8px; font-family: var(--mono); font-size: .78rem; line-height: 1.75; letter-spacing: 0; color: var(--ink-2); max-height: 280px; overflow: auto; text-align: left; padding: 14px; border-radius: var(--r-sm); background: #F5F3EF; border: 1px solid var(--line); }
 .actions { display: grid; gap: 8px; }
-.btn-mj { margin-top: 10px; width: 100%; }
+
+/* הדבקת תמונה במסגרת */
+.paste-frame { display: grid; gap: 10px; min-width: 0; }
+.paste-frame .frame { transition: box-shadow .2s, outline-color .2s; outline: 2px dashed transparent; outline-offset: 4px; }
+.paste-frame.is-over .frame { outline-color: var(--meridian); }
+.paste-frame.has-draft .frame { outline-color: var(--meridian); }
+.paste-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; min-width: 0; font-size: .86rem; color: var(--ink-3); }
+.paste-note { flex: 0 1 auto; min-width: 0; }
+.has-draft .paste-note { color: var(--ink); font-weight: 500; }
+
+/* הפרומפט בתוך כפתורי העתקה */
+.prompt-copy { display: grid; gap: 8px; }
+.prompt-copy .btn { width: 100%; white-space: normal; text-align: center; }
+.prompt-peek summary { cursor: pointer; font-size: .84rem; color: var(--ink-3); padding: 4px 2px; list-style: none; }
+.prompt-peek summary::-webkit-details-marker { display: none; }
+.prompt-peek summary:hover { color: var(--ink); }
+.prompt-peek[open] summary { color: var(--ink); }
 .actions .btn { justify-content: center; }
 .pager { display: flex; justify-content: space-between; gap: 10px; }
 .siblings { margin-top: var(--g-lg); padding-top: 32px; border-top: 1px solid var(--line); }

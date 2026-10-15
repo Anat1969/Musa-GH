@@ -3,7 +3,7 @@
 // the visual prompt and a Hebrew interpretation. Image: fal.ai (FAL_API_KEY), copied
 // into the musa-media bucket so it never expires. Open to every visitor (no login).
 // Without a fal key it falls back to the old Lovable function (see legacyImage). If that fails too, the study is still saved (reading, interpretation, prompt) with image_url null,
-// and { imageFor: id } completes the image later.
+// and { imageFor: id } completes the image later. { setImage: { id, data, type } } saves an image pasted by hand.
 import Anthropic from "npm:@anthropic-ai/sdk";
 
 const CORS = {
@@ -145,8 +145,37 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
 
-  let body: { source?: string; mode?: string; fresh?: boolean; imageFor?: string };
+  let body: { source?: string; mode?: string; fresh?: boolean; imageFor?: string; setImage?: { id?: string; data?: string; type?: string } };
   try { body = await req.json(); } catch { return json({ error: "Invalid JSON" }, 400); }
+
+  // An image pasted by a visitor (from Midjourney, for example) replaces the study's image.
+  if (body.setImage) {
+    const { id = "", data = "", type = "" } = body.setImage;
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return json({ error: "Invalid id" }, 400);
+    if (!/^image\/(jpeg|png|webp)$/.test(type)) return json({ error: "רק תמונות JPG, PNG או WEBP." }, 400);
+    let bytes: Uint8Array;
+    try { bytes = Uint8Array.from(atob(data), c => c.charCodeAt(0)); } catch { return json({ error: "התמונה לא נקראה." }, 400); }
+    if (bytes.byteLength < 1000 || bytes.byteLength > 8_000_000) return json({ error: "התמונה גדולה מדי או ריקה." }, 400);
+    const q = await fetch(`${SB_URL}/rest/v1/musa_generations?select=id&id=eq.${id}`, { headers: SB_HEADERS });
+    if (!(q.ok && (await q.json()).length)) return json({ error: "המחקר לא נמצא." }, 404);
+    const ext = type.endsWith("png") ? "png" : type.endsWith("webp") ? "webp" : "jpg";
+    const path = `studies/${id}-pasted-${Date.now()}.${ext}`;
+    const up = await fetch(`${SB_URL}/storage/v1/object/${BUCKET}/${path}`, {
+      method: "POST",
+      headers: { ...SB_HEADERS, "Content-Type": type, "Cache-Control": "31536000" },
+      body: bytes,
+    });
+    if (!up.ok) return json({ error: `העלאה נכשלה: ${await up.text()}` }, 500);
+    const image_url = `${SB_URL}/storage/v1/object/public/${BUCKET}/${path}`;
+    const p = await fetch(`${SB_URL}/rest/v1/musa_generations?id=eq.${id}`, {
+      method: "PATCH",
+      headers: { ...SB_HEADERS, "Content-Type": "application/json", Prefer: "return=representation" },
+      body: JSON.stringify({ image_url }),
+    });
+    if (!p.ok) return json({ error: `שמירה נכשלה: ${await p.text()}` }, 500);
+    const [saved] = await p.json();
+    return json({ generation: saved });
+  }
 
   // Complete the image of a saved study that has none.
   if (body.imageFor) {

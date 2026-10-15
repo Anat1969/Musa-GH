@@ -42,6 +42,7 @@ function mock(ctx, db, log) {
     }
     if (p === '/functions/v1/musa-generate') {
       const b = JSON.parse(req.postData()); db.calls.push(b);
+      if (b.setImage) { const row = db.rows.find(x => x.id === b.setImage.id); db.pasted.push(b.setImage); row.image_url = `${SB}/storage/v1/object/public/musa-media/studies/7.jpg`; return j(200, { generation: row }); }
       if (b.imageFor) { const row = db.rows.find(x => x.id === b.imageFor); row.image_url = `${SB}/storage/v1/object/public/musa-media/studies/99.jpg`; return j(200, { generation: row }); }
       if (db.fail) return j(502, { error: 'יצירת התמונה נכשלה. נסו שוב.' });
       const hit = db.rows.find(r => r.source === b.source && r.mode === b.mode);
@@ -61,7 +62,7 @@ function mock(ctx, db, log) {
 (async () => {
   const b = await chromium.launch();
   for (const [name, vp] of [['desktop', { width: 1440, height: 900 }], ['mobile', { width: 390, height: 844 }]]) {
-    const db = { rows: seed(), calls: [], fail: false }, log = [];
+    const db = { rows: seed(), calls: [], fail: false, pasted: [] }, log = [];
     const ctx = await b.newContext({ viewport: vp, permissions: ['clipboard-read', 'clipboard-write'], serviceWorkers: 'block' });
     await mock(ctx, db, log);
     const p = await ctx.newPage();
@@ -121,7 +122,7 @@ function mock(ctx, db, log) {
     (await p.locator('[data-act=fill-image] .key-mark').count()) === 1 ? ok('fill image button with key mark') : bad('fill btn');
     await p.screenshot({ path: `${S}/${name}-study-noimage.png` });
     await p.click('[data-act=fill-image]'); await p.waitForTimeout(1200);
-    db.calls.at(-1).imageFor === '20000000-0000-4000-8000-000000000001' && (await p.locator('.study-hero img').count()) === 1 && (await p.locator('[data-act=fill-image]').count()) === 0 ? ok('image completed in place') : bad('fill image');
+    db.calls.at(-1).imageFor === '20000000-0000-4000-8000-000000000001' && (await p.locator('.study-hero-wrap .frame img').count()) === 1 && (await p.locator('[data-act=fill-image]').count()) === 0 ? ok('image completed in place') : bad('fill image');
     await p.click('.tab:has-text("ארכיון")'); await p.waitForTimeout(800);
 
     // מחקר
@@ -131,6 +132,23 @@ function mock(ctx, db, log) {
     await p.click('[data-act=copy-prompt]'); await p.waitForTimeout(200);
     (await p.evaluate(() => navigator.clipboard.readText())).startsWith('Prompt') ? ok('copy prompt') : bad('copy prompt');
     (await p.locator('.study [data-act=fresh] .key-mark').count()) === 1 ? ok('key mark on fresh') : bad('key mark');
+    (await p.locator('.study .prompt').isVisible()) === false ? ok('prompt text hidden inside copy buttons') : bad('prompt visible');
+    await p.locator('.prompt-peek summary').click(); await p.waitForTimeout(200);
+    (await p.locator('.study .prompt').isVisible()) ? ok('prompt can be revealed') : bad('peek');
+    // הדבקת תמונה במסגרת: תצוגה מקדימה, ביטול, ושמירה
+    const before = await p.locator('.study-hero-wrap .frame img').getAttribute('src');
+    const pasteImg = async () => p.evaluate(async b64 => {
+      const bin = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+      const dt = new DataTransfer(); dt.items.add(new File([bin], 'mj.jpg', { type: 'image/jpeg' }));
+      window.dispatchEvent(new ClipboardEvent('paste', { clipboardData: dt, bubbles: true, cancelable: true }));
+    }, imgs[1].toString('base64'));
+    await pasteImg(); await p.waitForTimeout(400);
+    (await p.locator('[data-act=save-image]').count()) === 1 && (await p.locator('.study-hero-wrap .frame img').getAttribute('src')).startsWith('blob:') ? ok('paste shows preview in the frame') : bad('paste preview');
+    await p.click('[data-act=cancel-image]'); await p.waitForTimeout(300);
+    (await p.locator('.study-hero-wrap .frame img').getAttribute('src')) === before && db.pasted.length === 0 ? ok('cancel restores the image') : bad('cancel');
+    await p.locator('.paste-frame [data-act=file]').setInputFiles(path.join(IMG, 'room2.jpg')); await p.waitForTimeout(400);
+    await p.click('[data-act=save-image]'); await p.waitForTimeout(1500);
+    db.pasted.length === 1 && db.pasted[0].type === 'image/jpeg' && db.pasted[0].data.length > 1000 && (await p.locator('.study-hero-wrap .frame img').getAttribute('src')).endsWith('/7.jpg') ? ok('file saved as study image') : bad('save pasted ' + JSON.stringify(db.pasted.map(x => x.type)));
     await p.click('[data-act=older]'); await p.waitForTimeout(800);
     (await p.locator('.study-title').count()) ? ok('pager older') : bad('pager');
     await hs('study');
@@ -156,9 +174,11 @@ function mock(ctx, db, log) {
     await p.fill('[data-act=source]', 'מקור חדש');
     await p.click('[data-mode=art]');
     (await p.locator('[data-act=generate] .key-mark').count()) === 1 ? ok('key mark on generate') : bad('key generate');
+    if (name === 'desktop') { const [h1, h2] = await p.$$eval('.studio-grid > .panel', els => els.map(e => Math.round(e.getBoundingClientRect().height))); h1 === h2 ? ok(`studio panels equal height ${h1}`) : bad(`panels ${h1} vs ${h2}`); }
     await p.click('[data-act=generate]'); await p.waitForTimeout(1200);
     const last = db.calls.at(-1);
     last.source === 'מקור חדש' && last.mode === 'art' && (await p.locator('.out-done .interp').innerText()) === 'פרשנות חדשה.' ? ok('new generation shown') : bad('new gen ' + JSON.stringify(last));
+    (await p.locator('.out-done [data-act=copy-mj]').count()) === 1 && (await p.locator('.out-done [data-act=pick-image]').count()) === 1 ? ok('result has copy and paste') : bad('result tools');
     await p.screenshot({ path: `${S}/${name}-studio-done.png` });
     await p.click('[data-act=open-study]'); await p.waitForTimeout(900);
     (await p.locator('.study-title').innerText()) === 'מקור חדש' ? ok('new study opens from result') : bad('open new');

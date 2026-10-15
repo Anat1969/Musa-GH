@@ -47,6 +47,32 @@ export function Label({ n, children }) {
   );
 }
 
+/* הפרומפט שמור בתוך כפתורי העתקה. הטקסט עצמו נפתח רק לפי בקשה */
+export function PromptCopy({ prompt, toMj }) {
+  const [copied, setCopied] = useState("");
+  async function copy(kind) {
+    const text = kind === "mj" ? toMj(prompt) : prompt;
+    try { await navigator.clipboard.writeText(text); }
+    catch {
+      const t = document.createElement("textarea");
+      t.value = text; document.body.appendChild(t); t.select();
+      try { document.execCommand("copy"); } catch {}
+      t.remove();
+    }
+    setCopied(kind); setTimeout(() => setCopied(""), 1800);
+  }
+  return (
+    <div className="prompt-copy">
+      <button className="btn btn-dark" onClick={() => copy("mj")} data-act="copy-mj">{copied === "mj" ? "הועתק. מוכן להדבקה במידג׳רני" : "העתקת הפרומפט למידג׳רני"}</button>
+      <button className="btn" onClick={() => copy("p")} data-act="copy-prompt">{copied === "p" ? "הועתק" : "העתקת הפרומפט החזותי"}</button>
+      <details className="prompt-peek">
+        <summary>הצגת הפרומפט</summary>
+        <p className="prompt" dir="ltr">{prompt}</p>
+      </details>
+    </div>
+  );
+}
+
 export function Loading({ text = "טוען את הארכיון" }) {
   return <div className="state" role="status"><span className="pulse" />{text}</div>;
 }
