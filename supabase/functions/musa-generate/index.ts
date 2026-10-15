@@ -24,25 +24,29 @@ type Mode = typeof MODES[number];
 
 const SUFFIX = "Documentary realism, professional architecture photography. No text, no words, no writing, no frame divisions.";
 
+/* Three readings of one source, each pushed to its extreme:
+   1 board: a material composition that stands as a work of art.
+   2 illustration: the authentic, archaic place where the source lived, untouched by time.
+   3 art: the same DNA translated into radical contemporary minimalism. */
 const BRIEFS: Record<Mode, string> = {
-  board: `Architectural mood board for [INPUT].
-A curated constellation of visual fragments, not a collage but a field: material swatches, light studies, spatial atmospheres, tectonic details. Each element chosen for its cognitive resonance with the inner world of [INPUT], not for decorative harmony.
-Color palette extracted from its emotional register: two to three dominant tones, one dissonant accent. Materials shown in cross-section and surface: how they age, how they receive light, how they resist touch.
-Spatial references appear as fragments: a threshold, a ceiling angle, a window aperture. Scale references embedded naturally: a hand, a shadow, a horizon line.
-One tactile detail at the center of gravity, where the human and the material meet without ceremony.
-Editorial direction: the board reads as one breathing surface, medium format clarity, analogue warmth, slight grain. One dominant material or light study anchors the center; secondary fragments orbit at considered distances. The eye travels from tactile and warm to atmospheric and pale. One consistent light temperature across all fragments, chosen to match the register of [INPUT].
-Publication ready as an editorial spread in Wallpaper, Apartamento or Pin-Up. No labels, no grid lines.`,
-  illustration: `Architectural living space that embodies the cognitive and philosophical world of [INPUT], as it was lived.
-The space is intimate and unheroic. Materials carry memory: nothing purchased for effect. Objects that belong to the world of [INPUT] are placed, not displayed, mid-thought. The palette, period, climate and light are drawn from the time and place of [INPUT].
-Light from a single dominant directional source, never visible itself, only its consequence on surface and volume. The space holds a particular silence: inhabited by something just finished or about to begin. Small contradictions: the orderly and the abandoned, the tender and the worn.
-Photography: large format, 35mm equivalent, oblique camera at 30 to 45 degrees to the dominant wall, slightly below standing eye level. Strong foreground anchor, mid-ground carries the spatial narrative, background dissolves into controlled depth.
-Publication ready as a full-bleed cover of Wallpaper, Domus or El Croquis. No HDR, no computed symmetry, no people.`,
-  art: `A newly designed residential interior for a discerning client, drawn from the DNA of [INPUT] and translated into contemporary precision, built for life today.
-Not a reconstruction: a translation. The same emotional frequency, built with contemporary craft. Clean but not cold; the room breathes without performing.
-Materials selected for what they carry: plaster, oiled wood, stone, linen, chosen to echo [INPUT]. Furniture sparse, grounded, close to the floor. One considered alcove at human scale holding one meaningful object.
-The space opens to the outside through a large aperture; the boundary between inside and outside deliberately soft.
-Photography: medium format, seated eye level, 25 degrees off the main wall axis, never frontal. Late afternoon single directional light; the light does not illuminate, it selects.
-Publication ready as an AD or Wallpaper spread and as the first image of a client presentation. No people, no HDR, no computed symmetry.`,
+  board: `A material composition for [INPUT], made and photographed as a work of art, not as a design board.
+Real physical samples, chosen for what they carry of [INPUT]: stone, lime plaster, timber, metal, glass, paper, textile, earth, ash, wax. Each cut, broken or folded so its section and its surface both show.
+They are arranged on one ground (a raw plinth, a plaster slab or a worn table) as a single abstract composition, with the discipline of a still life by Giorgio Morandi, the layered planes of a Ben Nicholson relief and the restraint of an Isamu Noguchi garden: a clear centre of gravity, one deliberate tension, generous negative space, a rhythm of large and small, heavy and light.
+The colour field is drawn from the emotional register of [INPUT]: two or three tones and one dissonant accent. One gesture belongs only to [INPUT] and is unmistakable.
+Light: a single raking museum light from one side, deep soft shadows, every texture legible.
+Shot from slightly above, like a sculpture in a catalogue raisonné, medium format, quiet, gallery-grade. It must read as an artwork that could hang in a museum. No labels, no grid, no collage of photographs, no frames.`,
+  illustration: `The authentic, archaic place where the world of [INPUT] was actually lived, as if found untouched and photographed today.
+Everything is true to the period, region and climate of [INPUT]: vernacular construction, hand-made materials, lime wash over rough stone or earth, smoke-darkened beams, hand-worn thresholds, iron, clay, wool, unbleached linen. Patina everywhere; nothing restored, nothing new, no object later than the time of [INPUT].
+Objects that belong to [INPUT] are left mid-use, as if the inhabitant has just stepped out.
+Light is only what that time had: daylight from one small deep window, or a single flame. Dust in the air, deep shadow, warm and cold zones in the same room.
+Documentary, archival quality: large format camera, natural film grain, honest colour, oblique view at 30 to 45 degrees to the main wall, slightly below eye level, strong foreground texture, depth that falls into darkness.
+No people, no modern objects, no restoration gloss, no HDR, no computed symmetry.`,
+  art: `A contemporary residence that translates the DNA of [INPUT] into radical minimalism: one idea, built with absolute restraint.
+Architecture by reduction: monolithic surfaces in one or two materials only (micro-cement, fine lime plaster, pale stone, bleached oak), concealed details, no visible frames, no skirting, no handles. One frameless full-height opening to the outside, landscape or sky as the only image.
+Almost empty: at most one low piece of furniture and one object that carries [INPUT]. The rest is proportion, light and silence, in the spirit of John Pawson and Tadao Ando.
+Light: soft directional daylight that turns a wall into a gradient; one precise shadow line.
+Photography: medium format, calm, perfectly controlled verticals, a single-point or gentle two-point view, high-key but rich in tone.
+Publication ready as a lead image in an architecture monograph. No clutter, no decoration, no people, no HDR, no text.`,
 };
 
 const SCHEMA = {
@@ -56,7 +60,7 @@ const SCHEMA = {
   },
 };
 
-const system = (mode: Mode) => `You are an architectural ontologist. You translate a source of inspiration (a book, a song, an author, a person, a philosophical thought) into space.
+const system = (mode: Mode) => `You are an architectural ontologist. You translate a source of inspiration (a book, a song, an author, a person, a philosophical thought) into space. Be total: push the brief below to its extreme, never toward a safe middle.
 1. spatial_identity: one Hebrew sentence, up to 20 words, naming the spatial essence of the source: which space, matter and light it is.
 2. visual_prompt: one vivid English paragraph an image model can render directly, following the brief below. Replace [INPUT] with the actual source; never output the token [INPUT]. Every detail must contribute to the image.
 3. hebrew_interpretation: natural, precise Hebrew, up to 30 words, that links the specific source to the chosen spatial and material elements. Not flowery, no exclamation marks.
