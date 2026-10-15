@@ -73,8 +73,30 @@ function mock(ctx, db, log) {
     // השער
     await p.goto(U); await p.waitForTimeout(1500);
     (await p.locator('.brand .app-mark').count()) && (await p.locator('.brand-name').innerText()) === 'מוזה' ? ok('brand with app mark') : bad('brand');
-    (await p.locator('.hero-title').count()) && (await p.locator('.steps .step').count()) === 4 && (await p.locator('.mode-card').count()) === 3 ? ok('gate explains: hero, 4 steps, 3 modes') : bad('gate sections');
-    (await p.locator('.mode-card .frame img').count()) === 3 ? ok('mode cards show archive samples') : bad('mode samples');
+    (await p.locator('.hero-title').count()) && (await p.locator('.steps .step').count()) === 4 && (await p.locator('[data-mode-card]').count()) === 3 ? ok('gate explains: hero, 4 steps, 3 modes') : bad('gate sections');
+    // III: אותו מקור בשלושת האופנים
+    const srcOf = async sel => p.$$eval(sel, els => els.map(e => e.getAttribute('href').replace('#s/', '')));
+    const sameIds = await srcOf('.same-source .ccard');
+    const sameSources = new Set(sameIds.map(id => db.rows.find(x => x.id === decodeURIComponent(id))?.source));
+    const sameModes = sameIds.map(id => db.rows.find(x => x.id === decodeURIComponent(id))?.mode).join();
+    sameSources.size === 1 && sameModes === 'board,illustration,art' ? ok('same source in all three modes') : bad('same source ' + [...sameSources] + ' ' + sameModes);
+    await p.locator('[data-triad="1"]').click(); await p.waitForTimeout(600);
+    const ids2 = await srcOf('.same-source .ccard');
+    const src2 = new Set(ids2.map(id => db.rows.find(x => x.id === decodeURIComponent(id))?.source));
+    src2.size === 1 && [...src2][0] !== [...sameSources][0] ? ok('switching source keeps one source') : bad('switch triad');
+    // IV: אותו אופן, שלושה מקורות
+    const modeIds = await srcOf('.same-mode .ccard');
+    const mrows = modeIds.map(id => db.rows.find(x => x.id === decodeURIComponent(id)));
+    modeIds.length === 3 && new Set(mrows.map(x => x.source)).size === 3 && mrows.every(x => x.mode === 'illustration') ? ok('same mode, three different sources') : bad('same mode');
+    await p.locator('[data-same-mode=art]').click(); await p.waitForTimeout(600);
+    (await srcOf('.same-mode .ccard')).every(id => db.rows.find(x => x.id === decodeURIComponent(id))?.mode === 'art') ? ok('mode switch') : bad('mode switch');
+    // יישור: השורות מתיישרות בין הכרטיסים גם כשהטקסט באורך שונה
+    if (name === 'desktop') {
+      await p.locator('.same-source').scrollIntoViewIfNeeded(); await p.mouse.move(2, 2); await p.waitForTimeout(600);
+      const tops = await p.$$eval('.same-source .ccard', cs => cs.map(c => ['.ccard-interp', '.ccard-when'].map(q => Math.round(c.querySelector(q).getBoundingClientRect().top))));
+      const hs2 = await p.$$eval('.same-source .ccard', cs => cs.map(c => Math.round(c.getBoundingClientRect().height)));
+      tops.every(t => t[0] === tops[0][0] && t[1] === tops[0][1]) && new Set(hs2).size === 1 ? ok(`cards aligned row by row (${hs2[0]}px)`) : bad('alignment ' + JSON.stringify({ tops, hs2 }));
+    }
     (await p.locator('.meridian .tick').count()) === 3 ? ok('meridian showcase cycles 3 projects with images') : bad('ticks ' + await p.locator('.meridian .tick').count());
     const t0 = await p.locator('.meridian-title').innerText();
     await p.locator('.meridian .tick').nth(1).click(); await p.waitForTimeout(900);
@@ -169,8 +191,11 @@ function mock(ctx, db, log) {
 
     // סטודיו: מקור חדש
     await p.click('.tab:has-text("סטודיו")'); await p.waitForTimeout(700);
-    await p.locator('.chips .chip').first().click();
-    (await p.inputValue('[data-act=source]')).includes('\n') ? ok('suggestion splits work and author') : bad('suggestion');
+    (await p.locator('[data-dir]').count()) === 7 ? ok('7 thinking directions') : bad('directions');
+    await p.locator('[data-dir=music]').click(); await p.waitForTimeout(300);
+    (await p.locator('.dir-tip').innerText()).length > 10 && (await p.locator('[data-example]').count()) === 3 ? ok('direction shows tip and 3 examples') : bad('direction body');
+    await p.locator('[data-example]').first().click();
+    (await p.inputValue('[data-act=source]')).includes('\n') ? ok('example splits work and author') : bad('suggestion');
     await p.fill('[data-act=source]', 'מקור חדש');
     await p.click('[data-mode=art]');
     (await p.locator('[data-act=generate] .key-mark').count()) === 1 ? ok('key mark on generate') : bad('key generate');

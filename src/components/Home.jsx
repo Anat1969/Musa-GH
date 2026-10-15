@@ -15,15 +15,14 @@ export default function Home({ gens, status }) {
       .filter(Boolean).slice(0, 8),
     [projects]
   );
-  /* דוגמה לכל אופן, כל אחת מפרויקט אחר */
-  const sample = useMemo(() => {
-    const out = {}, used = new Set();
-    for (const id of MODE_IDS) {
-      const g = gens.find(x => x.mode === id && x.image_url && !used.has(x.source.trim())) || gens.find(x => x.mode === id && x.image_url);
-      if (g) { out[id] = g; used.add(g.source.trim()); }
-    }
-    return out;
-  }, [gens]);
+  /* פרויקטים שיש להם תמונה בכל שלושת האופנים: הבסיס להשוואה של מקור אחד בשלוש קריאות */
+  const triads = useMemo(() => projects
+    .map(p => {
+      const by = {};
+      for (const id of MODE_IDS) by[id] = p.items.find(g => g.mode === id && g.image_url);
+      return MODE_IDS.every(id => by[id]) ? { source: p.source, by } : null;
+    })
+    .filter(Boolean).slice(0, 6), [projects]);
 
   return (
     <div className="home">
@@ -84,36 +83,14 @@ export default function Home({ gens, status }) {
         </ol>
       </section>
 
-      <section className="modes" aria-labelledby="modes-t">
-        <Label n="III">שלושה אופני תרגום</Label>
-        <h2 id="modes-t">אותו מקור, שלוש קריאות</h2>
-        <div className="mode-cards">
-          {MODE_IDS.map((id, i) => {
-            const m = MODES[id], g = sample[id];
-            return (
-              <motion.article key={id} className={`mode-card mode-${id}`}
-                initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-40px" }}
-                transition={{ duration: 0.55, delay: i * 0.1, ease: EASE }}>
-                <Frame src={g?.image_url} alt={g ? `${m.name}: ${splitSource(g.source).title}` : ""} ratio="4 / 3" />
-                <div className="mode-card-body">
-                  <div className="mode-card-top"><span className="mono">{m.n}</span><span className="mono muted" dir="ltr">{m.en}</span></div>
-                  <h3>{m.name}</h3>
-                  <p className="mode-line">{m.line}</p>
-                  <p className="muted">{m.body}</p>
-                  <p className="mode-when"><b>מתי</b> {m.when}</p>
-                  {g && <a className="link" href={href("s", g.id)} onClick={e => { e.preventDefault(); go("s", g.id); }}>דוגמה: {splitSource(g.source).title}</a>}
-                </div>
-              </motion.article>
-            );
-          })}
-        </div>
-      </section>
+      {triads.length > 0 && <SameSource triads={triads} />}
+      {projects.length > 2 && <SameMode projects={projects} />}
 
       {projects.length > 0 && (
         <section className="recent" aria-labelledby="recent-t">
           <div className="section-head">
             <div>
-              <Label n="IV">מהארכיון</Label>
+              <Label n="V">מהארכיון</Label>
               <h2 id="recent-t">פרויקטים אחרונים</h2>
             </div>
             <a className="btn" href={href("archive")} onClick={e => { e.preventDefault(); go("archive"); }}>כל {projects.length} הפרויקטים</a>
@@ -199,5 +176,101 @@ function Meridian({ items }) {
         </div>
       </div>
     </div>
+  );
+}
+
+/* III. מקור אחד, שלוש קריאות: ההשראה קבועה, רק האופן משתנה. כך רואים מה כל אופן עושה */
+function SameSource({ triads }) {
+  const [i, setI] = useState(0);
+  const t = triads[Math.min(i, triads.length - 1)];
+  const s = splitSource(t.source);
+  return (
+    <section className="compare same-source" aria-labelledby="same-source-t">
+      <Label n="III">שלושה אופני תרגום</Label>
+      <h2 id="same-source-t">אותו מקור, שלוש קריאות</h2>
+      <p className="compare-lead">
+        ההשראה קבועה, ורק אופן התרגום משתנה. לפי הסדר: מהחומרים, אל המקום שבו המקור חי, ומשם אל בית של היום.
+      </p>
+      <div className="compare-pick">
+        <span className="mono muted">המקור</span>
+        <div className="chips" role="tablist" aria-label="בחירת מקור">
+          {triads.map((x, k) => (
+            <button key={x.source} role="tab" aria-selected={k === i} className={`chip${k === i ? " on" : ""}`} onClick={() => setI(k)} data-triad={k}>
+              {splitSource(x.source).title}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="compare-title">
+        <span className="compare-src">{s.title}</span>
+        {s.by && <span className="compare-by">{s.by}</span>}
+      </div>
+      <div className="compare-axis" aria-hidden="true">
+        {MODE_IDS.map(id => <span key={id} className={`axis-stop mode-${id}`}><i />{MODES[id].axis}</span>)}
+      </div>
+      <AnimatePresence mode="wait">
+        <motion.div key={t.source} className="compare-grid"
+          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35, ease: EASE }}>
+          {MODE_IDS.map(id => {
+            const m = MODES[id], g = t.by[id];
+            return (
+              <a key={id} className={`ccard mode-${id}`} href={href("s", g.id)} onClick={e => { e.preventDefault(); go("s", g.id); }} data-mode-card={id}>
+                <Frame src={g.image_url} alt={`${m.name}: ${s.title}`} ratio="4 / 3" />
+                <span className="ccard-top"><span className="mono">{m.n}</span><span className="mono muted" dir="ltr">{m.en}</span></span>
+                <span className="ccard-name">{m.name}</span>
+                <span className="ccard-line">{m.line}</span>
+                <span className="ccard-interp">{g.hebrew_interpretation}</span>
+                <span className="ccard-when"><b>מתי</b> {m.when}</span>
+              </a>
+            );
+          })}
+        </motion.div>
+      </AnimatePresence>
+    </section>
+  );
+}
+
+/* IV. אופן אחד, שלושה מקורות: האופן קבוע, ולכן ההבדל בין התמונות הוא ההבדל בין המקורות */
+function SameMode({ projects }) {
+  const [mode, setMode] = useState("illustration");
+  const items = useMemo(() => projects
+    .map(p => p.items.find(g => g.mode === mode && g.image_url))
+    .filter(Boolean).slice(0, 3), [projects, mode]);
+  const m = MODES[mode];
+  return (
+    <section className="compare same-mode" aria-labelledby="same-mode-t">
+      <Label n="IV">שלושה מקורות</Label>
+      <h2 id="same-mode-t">אותה קריאה, שלושה מקורות</h2>
+      <p className="compare-lead">
+        עכשיו האופן קבוע, ולכן ההבדל בין התמונות הוא ההבדל בין המקורות עצמם: החומר, האור והשקט של כל אחד.
+      </p>
+      <div className="compare-pick">
+        <span className="mono muted">האופן</span>
+        <div className="chips" role="tablist" aria-label="בחירת אופן">
+          {MODE_IDS.map(id => (
+            <button key={id} role="tab" aria-selected={id === mode} className={`chip chip-mode mode-${id}${id === mode ? " on" : ""}`} onClick={() => setMode(id)} data-same-mode={id}>
+              <i aria-hidden="true" />{MODES[id].name}
+            </button>
+          ))}
+        </div>
+      </div>
+      <AnimatePresence mode="wait">
+        <motion.div key={mode} className={`compare-grid compare-grid-sm mode-${mode}`}
+          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35, ease: EASE }}>
+          {items.map(g => {
+            const s = splitSource(g.source);
+            return (
+              <a key={g.id} className={`ccard mode-${mode}`} href={href("s", g.id)} onClick={e => { e.preventDefault(); go("s", g.id); }} data-source-card>
+                <Frame src={g.image_url} alt={`${m.name}: ${s.title}`} ratio="4 / 3" />
+                <span className="ccard-top"><span className="mono">{m.name}</span><span className="mono muted">{fmtDate(g.created_at)}</span></span>
+                <span className="ccard-name">{s.title}</span>
+                <span className="ccard-line">{s.by || "\u00a0"}</span>
+                <span className="ccard-interp">{g.hebrew_interpretation}</span>
+              </a>
+            );
+          })}
+        </motion.div>
+      </AnimatePresence>
+    </section>
   );
 }
