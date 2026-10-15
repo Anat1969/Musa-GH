@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2A2926"/>
+      <stop offset="1" stop-color="#0E0E0D"/>
+    </linearGradient>
+    <linearGradient id="room" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F3EFE6" stop-opacity=".95"/>
+      <stop offset="1" stop-color="#CFC6B4" stop-opacity=".85"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <!-- the word: lines of text on the right -->
+  <g stroke="#E9E4D8" stroke-width="10" stroke-linecap="round" opacity=".85">
+    <line x1="300" y1="190" x2="398" y2="190"/>
+    <line x1="316" y1="230" x2="398" y2="230"/>
+    <line x1="300" y1="270" x2="398" y2="270"/>
+    <line x1="340" y1="310" x2="398" y2="310"/>
+  </g>
+  <!-- the space: an arched room on the left -->
+  <path d="M112 380 V214 a62 62 0 0 1 124 0 V380 Z" fill="url(#room)"/>
+  <path d="M146 380 V236 a28 28 0 0 1 56 0 V380 Z" fill="#1B1A18" opacity=".55"/>
+  <!-- the meridian -->
+  <line x1="268" y1="108" x2="268" y2="404" stroke="#D89A2B" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="268" cy="108" r="13" fill="#D89A2B"/>
+</svg>
