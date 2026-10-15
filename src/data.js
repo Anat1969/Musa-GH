@@ -10,7 +10,7 @@ export const LINKS = {
 export const PROJECT = [
   { k: "ריפו ב-GitHub", v: "Anat1969/Musa-GH", href: "https://github.com/Anat1969/Musa-GH" },
   { k: "פרויקט Supabase", v: "cultura-GH", sub: "ktqmwpbzcnzkhjskqisy · טבלה musa_generations, דלי musa-media", href: "https://supabase.com/dashboard/project/ktqmwpbzcnzkhjskqisy" },
-  { k: "פונקציית התרגום", v: "musa-generate", sub: "קריאה ופרשנות: claude-opus-5-5. צילום: fal nano-banana-2, ובגיבוי flux schnell" },
+  { k: "פונקציית התרגום", v: "musa-generate", sub: "קריאה ופרשנות: claude-opus-5-5. צילום: fal nano-banana-2, ובגיבוי flux schnell. עד שיוגדר FAL_API_KEY, הצילום עובר דרך פרויקט Lovable הישן, ולכן לא למחוק אותו" },
   { k: "מפתחות", v: "ANTHROPIC_API_KEY · FAL_API_KEY", sub: "סודות בפרויקט cultura-GH, לא נחשפים בדפדפן. כל כפתור שמפעיל אותם מסומן במפתח מאיר" },
   { k: "פריסה", v: "Vercel · musa", href: "https://musa-gh.vercel.app" },
   { k: "מקור", v: "Lovable · Muse Meridian Studio", sub: "הארכיון הועבר במלואו: 40 מחקרים ב-15 פרויקטים" },

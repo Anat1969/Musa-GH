@@ -2,7 +2,7 @@
 // Text: Claude (ANTHROPIC_API_KEY) reads the spatial identity of the source and writes
 // the visual prompt and a Hebrew interpretation. Image: fal.ai (FAL_API_KEY), copied
 // into the musa-media bucket so it never expires. Open to every visitor (no login).
-// Without a fal key the study is still saved (reading, interpretation, prompt) with image_url null,
+// Without a fal key it falls back to the old Lovable function (see legacyImage). If that fails too, the study is still saved (reading, interpretation, prompt) with image_url null,
 // and { imageFor: id } completes the image later.
 import Anthropic from "npm:@anthropic-ai/sdk";
 
@@ -73,9 +73,46 @@ function falKey(): string | undefined {
   }
 }
 
-async function makeImage(prompt: string, id: string, imageErrors: string[]): Promise<string | null> {
+/* Temporary route while cultura-GH has no fal secret: the old Lovable "generate" function still
+   holds Anat's fal keys. The study's own visual prompt goes in as the source, so the image follows it.
+   Once FAL_API_KEY is set this is never reached; if the Lovable project is deleted it simply fails. */
+const LEGACY_URL = "https://fzpgcgbyhnximfmxicvi.supabase.co";
+const LEGACY_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ6cGdjZ2J5aG54aW1mbXhpY3ZpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0NzA3NzYsImV4cCI6MjA5MTA0Njc3Nn0.Ol0ORgB1kktgsQJ-ggA2dwoCNU1gXo0k55XdKVbAZ7Q";
+
+async function legacyImage(prompt: string, mode: string, id: string, imageErrors: string[]): Promise<string | null> {
+  try {
+    const r = await fetch(`${LEGACY_URL}/functions/v1/generate`, {
+      method: "POST",
+      headers: { apikey: LEGACY_KEY, Authorization: `Bearer ${LEGACY_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ source: `${prompt} ${SUFFIX}`, mode }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok || !data?.image_url) { imageErrors.push(`legacy ${r.status} ${JSON.stringify(data).slice(0, 160)}`); return null; }
+    return await store(data.image_url, id);
+  } catch (e) { imageErrors.push(`legacy ${e}`); return null; }
+}
+
+/* Copies an image into musa-media so it never expires */
+async function store(url: string, id: string): Promise<string> {
+  const img = await fetch(url);
+  if (!img.ok) return url;
+  const type = img.headers.get("content-type") ?? "image/jpeg";
+  const ext = type.includes("png") ? "png" : type.includes("webp") ? "webp" : "jpg";
+  const path = `studies/${id}.${ext}`;
+  const up = await fetch(`${SB_URL}/storage/v1/object/${BUCKET}/${path}`, {
+    method: "POST",
+    headers: { ...SB_HEADERS, "Content-Type": type, "x-upsert": "true", "Cache-Control": "31536000" },
+    body: await img.arrayBuffer(),
+  });
+  return up.ok ? `${SB_URL}/storage/v1/object/public/${BUCKET}/${path}` : url;
+}
+
+async function makeImage(prompt: string, id: string, imageErrors: string[], mode: string): Promise<string | null> {
   const key = falKey();
-  if (!key) { imageErrors.push("FAL_API_KEY is not configured"); return null; }
+  if (!key) {
+    imageErrors.push("FAL_API_KEY is not configured");
+    return await legacyImage(prompt, mode, id, imageErrors);
+  }
   const full = `${prompt} ${SUFFIX}`;
   for (const [endpoint, body] of [
     ["https://fal.run/fal-ai/nano-banana-2", { prompt: full, image_size: "landscape_16_9" }],
@@ -91,17 +128,7 @@ async function makeImage(prompt: string, id: string, imageErrors: string[]): Pro
       const data = await r.json();
       const url = data?.images?.[0]?.url;
       if (!url) { imageErrors.push(`${endpoint.split("/").pop()} no image`); continue; }
-      const img = await fetch(url);
-      if (!img.ok) return url;
-      const type = img.headers.get("content-type") ?? "image/jpeg";
-      const ext = type.includes("png") ? "png" : type.includes("webp") ? "webp" : "jpg";
-      const path = `studies/${id}.${ext}`;
-      const up = await fetch(`${SB_URL}/storage/v1/object/${BUCKET}/${path}`, {
-        method: "POST",
-        headers: { ...SB_HEADERS, "Content-Type": type, "x-upsert": "true", "Cache-Control": "31536000" },
-        body: await img.arrayBuffer(),
-      });
-      return up.ok ? `${SB_URL}/storage/v1/object/public/${BUCKET}/${path}` : url;
+      return await store(url, id);
     } catch (e) { imageErrors.push(`${endpoint.split("/").pop()} ${e}`); }
   }
   console.error("musa image failed", imageErrors);
@@ -109,7 +136,7 @@ async function makeImage(prompt: string, id: string, imageErrors: string[]): Pro
 }
 
 function noImage(errs: string[]): string {
-  return errs.some(e => e.includes("FAL_API_KEY"))
+  return errs.some(e => e.includes("FAL_API_KEY")) && !errs.some(e => e.startsWith("legacy"))
     ? "מפתח התמונות (FAL_API_KEY) עדיין לא מוגדר בפרויקט. הקריאה והפרומפט נשמרו, והתמונה תושלם כשהמפתח יוגדר."
     : "יצירת התמונה נכשלה. הקריאה והפרומפט נשמרו, ואפשר להשלים את התמונה מדף המחקר.";
 }
@@ -129,7 +156,7 @@ Deno.serve(async (req) => {
     if (!row) return json({ error: "המחקר לא נמצא." }, 404);
     if (row.image_url) return json({ generation: row });
     const errs: string[] = [];
-    const image_url = await makeImage(row.visual_prompt, row.id, errs);
+    const image_url = await makeImage(row.visual_prompt, row.id, errs, row.mode);
     if (!image_url) return json({ error: noImage(errs), detail: errs }, 502);
     const up = await fetch(`${SB_URL}/rest/v1/musa_generations?id=eq.${row.id}`, {
       method: "PATCH",
@@ -180,7 +207,7 @@ Deno.serve(async (req) => {
 
   const id = crypto.randomUUID();
   const errs: string[] = [];
-  const image_url = await makeImage(out.visual_prompt, id, errs);
+  const image_url = await makeImage(out.visual_prompt, id, errs, mode);
 
   const row = { id, source, mode, image_url, ...out };
   const ins = await fetch(`${SB_URL}/rest/v1/musa_generations`, {
