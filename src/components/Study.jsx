@@ -2,12 +2,12 @@ import { useMemo, useState } from "react";
 import { MODES, splitSource, fmtDate, midjourney } from "../data.js";
 import { generate, completeImage } from "../lib/supabase.js";
 import { go, href } from "../router.js";
-import { Frame, ModeTag, Label, Loading } from "./ui.jsx";
+import { Frame, ModeTag, Label, Loading, PromptCopy } from "./ui.jsx";
 import KeyMark from "./KeyMark.jsx";
+import PasteFrame from "./PasteFrame.jsx";
 
 export default function Study({ id, gens, status, onCreated }) {
   const g = gens.find(x => x.id === id);
-  const [copied, setCopied] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -30,11 +30,6 @@ export default function Study({ id, gens, status, onCreated }) {
   const at = order.indexOf(g.id);
   const newer = at > 0 ? order[at - 1] : null;
   const older = at >= 0 && at < order.length - 1 ? order[at + 1] : null;
-
-  async function copy(kind) {
-    try { await navigator.clipboard.writeText(kind === "mj" ? midjourney(g.visual_prompt) : g.visual_prompt); } catch {}
-    setCopied(kind); setTimeout(() => setCopied(""), 1800);
-  }
 
   async function fillImage() {
     setBusy(true); setError("");
@@ -61,12 +56,12 @@ export default function Study({ id, gens, status, onCreated }) {
         <span>{m.name}</span>
       </nav>
 
-      <Frame src={g.image_url} alt={`${m.name}: ${s.title}`} ratio="16 / 9" eager className="study-hero">
+      <PasteFrame gen={g} onSaved={x => onCreated(x)} ratio="16 / 9" className="study-hero-wrap">
         <figcaption className="glass study-cap">
           <ModeTag mode={g.mode} plain />
           <span className="mono">{fmtDate(g.created_at)}</span>
         </figcaption>
-      </Frame>
+      </PasteFrame>
 
       <div className="study-grid">
         <div className="study-main">
@@ -94,12 +89,9 @@ export default function Study({ id, gens, status, onCreated }) {
 
         <aside className="study-side">
           <div className="panel prompt-box">
-            <div className="prompt-head">
-              <Label>הפרומפט החזותי</Label>
-              <button className="btn btn-sm" onClick={() => copy("p")} data-act="copy-prompt">{copied === "p" ? "הועתק" : "העתקה"}</button>
-            </div>
-            <p className="prompt" dir="ltr">{g.visual_prompt}</p>
-            <button className="btn btn-sm btn-mj" onClick={() => copy("mj")} data-act="copy-mj">{copied === "mj" ? "הועתק, מוכן למידג׳רני" : "העתקה כפרומפט למידג׳רני"}</button>
+            <Label>הפרומפט</Label>
+            <p className="muted small">מעתיקים למידג׳רני, יוצרים שם תמונה, ומדביקים אותה במסגרת למעלה.</p>
+            <PromptCopy prompt={g.visual_prompt} toMj={midjourney} />
           </div>
 
           <div className="panel actions">

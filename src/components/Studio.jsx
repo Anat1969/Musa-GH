@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { MODES, MODE_IDS, PROCESS, SUGGESTIONS, splitSource } from "../data.js";
+import { MODES, MODE_IDS, PROCESS, SUGGESTIONS, midjourney } from "../data.js";
 import { generate } from "../lib/supabase.js";
 import { go, href } from "../router.js";
-import { Frame, ModeTag, Label } from "./ui.jsx";
+import { ModeTag, Label, PromptCopy } from "./ui.jsx";
 import KeyMark from "./KeyMark.jsx";
+import PasteFrame from "./PasteFrame.jsx";
 
 const STAGE_MS = [4000, 9000, 9000, 22000];
 
@@ -148,11 +149,12 @@ export default function Studio({ initial, gens, onCreated }) {
               <motion.div key={g.id} className="out-done" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                 {result.cached && <p className="note">המקור הזה כבר נחקר באופן הזה. זה המחקר מהארכיון.</p>}
                 {result.imageError && <p className="note" data-note="image">{result.imageError}</p>}
-                <Frame src={g.image_url} alt={splitSource(g.source).title} ratio="16 / 10" eager>
+                <PasteFrame gen={g} onSaved={x => { onCreated(x); setResult(r => ({ ...r, generation: x, imageError: "" })); }} ratio="16 / 10">
                   <figcaption className="glass"><ModeTag mode={g.mode} plain /></figcaption>
-                </Frame>
+                </PasteFrame>
                 {g.spatial_identity && <p className="identity">{g.spatial_identity}</p>}
                 <blockquote className="interp">{g.hebrew_interpretation}</blockquote>
+                <PromptCopy prompt={g.visual_prompt} toMj={midjourney} />
                 <div className="row">
                   <a className="btn btn-dark" href={href("s", g.id)} onClick={e => { e.preventDefault(); go("s", g.id); }} data-act="open-study">לפתיחת המחקר</a>
                   {result.cached && <button className="btn" onClick={() => run(true)} data-act="fresh">גרסה נוספת<KeyMark /></button>}

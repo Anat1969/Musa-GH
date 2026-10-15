@@ -35,6 +35,27 @@ export async function completeImage(id) {
   return data.generation;
 }
 
+/* תמונה שהודבקה ידנית: מוקטנת ל-JPEG (עד 2400 פיקסלים) ונשמרת כתמונת המחקר. לא מפעיל מפתח בתשלום */
+export async function setImage(id, blob) {
+  const bmp = await createImageBitmap(blob);
+  const scale = Math.min(1, 2400 / Math.max(bmp.width, bmp.height));
+  const c = document.createElement("canvas");
+  c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  const jpeg = await new Promise(r => c.toBlob(r, "image/jpeg", 0.9));
+  const buf = new Uint8Array(await jpeg.arrayBuffer());
+  let bin = "";
+  for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode(...buf.subarray(i, i + 0x8000));
+  const { data, error } = await supabase.functions.invoke("musa-generate", { body: { setImage: { id, data: btoa(bin), type: "image/jpeg" } } });
+  if (error) {
+    let msg = error.message;
+    try { msg = (await error.context.json()).error || msg; } catch {}
+    throw new Error(msg);
+  }
+  if (data?.error) throw new Error(data.error);
+  return data.generation;
+}
+
 /* מפעיל את מפתחות Claude ו-fal. fresh: גרסה חדשה גם אם המקור כבר נחקר באותו אופן */
 export async function generate(source, mode, fresh = false) {
   const { data, error } = await supabase.functions.invoke("musa-generate", { body: { source, mode, fresh } });
