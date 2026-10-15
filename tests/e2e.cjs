@@ -203,9 +203,12 @@ function mock(ctx, db, log) {
     await p.click('.out-done [data-act=fresh]'); await p.waitForTimeout(900);
     db.calls.at(-1).fresh === true && db.rows.length === nBefore + 1 ? ok('fresh version created') : bad('fresh');
 
-    // סטודיו: מקור חדש
+    // סטודיו: מקור חדש, ממסך נקי
+    await p.click('.brand'); await p.waitForTimeout(500);
     await p.click('.tab:has-text("סטודיו")'); await p.waitForTimeout(700);
     (await p.locator('[data-dir]').count()) === 7 ? ok('7 thinking directions') : bad('directions');
+    { const seen = []; for (const m of ['board', 'illustration', 'art']) { await p.click(`[data-mode=${m}]`); await p.waitForTimeout(150); seen.push(await p.locator('.out-idle .blueprint').getAttribute('data-blueprint')); }
+      seen.join() === 'board,illustration,art' ? ok('each reading has its own drawing') : bad('blueprint ' + seen); }
     await p.locator('[data-dir=music]').click(); await p.waitForTimeout(300);
     (await p.locator('.dir-tip').innerText()).length > 10 && (await p.locator('[data-example]').count()) === 3 ? ok('direction shows tip and 3 examples') : bad('direction body');
     await p.locator('[data-example]').first().click();

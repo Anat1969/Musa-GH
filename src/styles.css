@@ -312,13 +312,18 @@ main { padding-top: var(--nav-h); min-height: 100vh; }
 .studio-out > div { display: grid; gap: 16px; align-content: start; }
 .blueprint { width: 100%; height: auto; max-height: 240px; margin-bottom: 8px; }
 .blueprint path { fill: none; stroke: var(--ink-3); stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; }
-.blueprint .thin { stroke-width: .7; stroke-dasharray: 3 4; }
+.blueprint .thin { stroke-width: .7; stroke-dasharray: .02 .025; }
+.blueprint .dots { stroke-width: 2.6; stroke: var(--ink-3); }
+.blueprint .accent { stroke: var(--c); stroke-width: 1.6; }
+.blueprint .light { stroke: var(--meridian); stroke-width: .9; stroke-dasharray: .03 .03; opacity: .8; }
 .blueprint .meridian { stroke: var(--meridian); stroke-width: 1.4; }
-.blueprint.drawing path { stroke-dasharray: 420; stroke-dashoffset: 420; animation: draw 3.6s var(--ease) infinite alternate; }
-.blueprint.drawing path:nth-child(2) { animation-delay: .3s; }
-.blueprint.drawing path:nth-child(3) { animation-delay: .6s; }
-.blueprint.drawing path:nth-child(4) { animation-delay: .9s; }
-.blueprint.drawing .meridian { animation-delay: 1.2s; }
+/* כל קו נמתח בתורו. הקווים הדקים והמקווקווים נכנסים בעמעום, כדי לשמור על המקף שלהם */
+.blueprint.drawing path { stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw 3.8s var(--ease) infinite alternate; animation-delay: calc(var(--i) * .22s); }
+.blueprint.drawing .thin, .blueprint.drawing .light, .blueprint.drawing .dots { stroke-dashoffset: 0; animation-name: fadein; }
+.blueprint.drawing .thin { stroke-dasharray: .02 .025; }
+.blueprint.drawing .light { stroke-dasharray: .03 .03; }
+.blueprint.drawing .dots { stroke-dasharray: none; }
+@keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
 @keyframes draw { to { stroke-dashoffset: 0; } }
 .mini-steps { margin: 0; padding-inline-start: 20px; display: grid; gap: 10px; color: var(--ink-2); font-size: .98rem; }
 .process { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
