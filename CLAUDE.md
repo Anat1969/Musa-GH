@@ -11,12 +11,15 @@
 - `public/`: `logo.png` (הלוגו של ענת), `icons/` (אייקון האפליקציה: חדר, מרידיאן ושורות טקסט, בלי אותיות), `manifest.webmanifest`, `sw.js`.
 
 ## Supabase: cultura-GH בלבד (ktqmwpbzcnzkhjskqisy), פרויקט משותף
-- לא לגעת בשום דבר שאינו מתחיל ב-musa. הפרויקט "Muse Meridian Studio" (qjodikwzifgqfdbhyyhy) לא בשימוש: ענת רוצה למחוק אותו. מסד הנתונים הישן של Lovable (fzpgcgbyhnximfmxicvi) גם לא בשימוש.
+- לא לגעת בשום דבר שאינו מתחיל ב-musa. הפרויקט "Muse Meridian Studio" (qjodikwzifgqfdbhyyhy) לא בשימוש: ענת רוצה למחוק אותו. מסד הנתונים של Lovable (fzpgcgbyhnximfmxicvi) משמש רק לנתיב הזמני של התמונות (ראו למטה).
 - טבלה `musa_generations`: id, source, mode (board, illustration, art), image_url (יכול להיות null), hebrew_interpretation, visual_prompt, spatial_identity, created_at. RLS: קריאה ציבורית. כתיבה רק דרך הפונקציה (service role).
 - דלי ציבורי `musa-media` (`studies/<id>.<ext>`).
 - פונקציה `musa-generate` (המקור ב-`supabase/functions/musa-generate`): קריאה ופרשנות ב-claude-opus-5-5 (`ANTHROPIC_API_KEY`), תמונה ב-fal nano-banana-2 ובגיבוי flux schnell (`FAL_API_KEY`). מקור ואופן שכבר נחקרו חוזרים מהארכיון אלא אם `fresh: true`. `imageFor: <id>` משלים תמונה למחקר שנשמר בלי תמונה.
-- בלי מפתח fal המחקר נשמר בלי תמונה, עם הודעה ברורה, ובדף המחקר יש "השלמת התמונה". נכון ל-15.10.2026 אין בפרויקט סוד בשם fal בכלל (בדקתי את שמות הסודות: ANTHROPIC_API_KEY, Claude-API, math-creator). זה פוגע גם ב-mahut-generate וב-architaip-fal-image.
-- `musa-import` ו-`musa-falcheck`: חד-פעמיות. הסתיימו ומחזירות 410.
+- נכון ל-15.10.2026 אין ב-cultura-GH סוד בשם fal בכלל (שמות הסודות: ANTHROPIC_API_KEY, Claude-API, math-creator). זה פוגע גם ב-mahut-generate וב-architaip-fal-image.
+- נתיב זמני לתמונות (`legacyImage` בפונקציה): כשאין `FAL_API_KEY`, התמונה נוצרת דרך הפונקציה `generate` בפרויקט Lovable הישן (fzpgcgbyhnximfmxicvi), שעדיין מחזיק את מפתחות fal של ענת. הפרומפט החזותי של המחקר נשלח כמקור, והתמונה מועתקת ל-musa-media. נבדק חי: עובד.
+- **לא למחוק את פרויקט Lovable לפני שמוגדר `FAL_API_KEY` ב-cultura-GH.** אחרי שהמפתח מוגדר, הנתיב הזמני לא מופעל, ואפשר למחוק את Lovable ולהסיר את `legacyImage`.
+- אם גם הנתיב הזמני נכשל, המחקר נשמר בלי תמונה, עם הודעה ברורה, ובדף המחקר יש "השלמת התמונה".
+- `musa-import`, `musa-falcheck` ו-`musa-fill`: חד-פעמיות. הסתיימו ומחזירות 410. `musa-fill` השלימה ב-15.10.2026 את שתי התמונות שחסרו.
 - הארכיון הועבר מ-Lovable: 40 מחקרים ב-15 פרויקטים, כל התמונות הועתקו ל-musa-media.
 - בדיקה חיה של הפונקציה מהסביבה: דרך `extensions.http` ב-SQL (עם `http_set_curlopt('CURLOPT_TIMEOUT','170')`), כי supabase.co לא נגיש ישירות.
 - כלי ה-MCP לא מריץ DROP או REVOKE בלי אישור. להוסיף במקום למחוק.
