@@ -1,0 +1,19 @@
+{
+  "id": "/",
+  "name": "מוזה: סטודיו לתרגום השראה למרחב",
+  "short_name": "מוזה",
+  "description": "ספר, שיר, יוצר או מחשבה הופכים לצילום אדריכלי ולפרשנות קצרה, ונשמרים בארכיון פרויקטים.",
+  "lang": "he",
+  "dir": "rtl",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F2F0EC",
+  "theme_color": "#151513",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

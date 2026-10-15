@@ -1,0 +1,47 @@
+# מוזה (Muse Meridian): סטודיו לתרגום השראה למרחב
+
+ספר, שיר, יוצר או מחשבה הופכים לקריאה מרחבית, צילום אדריכלי ופרשנות קצרה, ונשמרים בארכיון פרויקטים לפי המקור. הועבר מ-Lovable (Muse Meridian Studio, https://lovable.dev/projects/92d9b193-4b40-46a7-b19e-8a825a39193c), כולל כל הארכיון.
+
+## מבנה
+- Vite + React + framer-motion + supabase-js. JS ו-CSS רגיל (`src/styles.css`). בלי Tailwind, בלי shadcn.
+- `src/router.js`: הכתובת היא המצב. `#` שער, `#studio` ו-`#studio/<מקור>`, `#archive` ו-`#archive/<אופן>`, `#s/<id>` מחקר.
+- `src/data.js`: טקסטים קבועים, שלושת האופנים (`MODES`), השלבים, קישורים ופרטי הפרויקט (`PROJECT`) שמוצגים בכרטיס ההגדרות. `midjourney()` בונה פרומפט למידג'רני.
+- `src/components/`: `Nav.jsx` (סרגל עליון, כרטיס הגדרות מהלוגו), `Home.jsx` (השער), `Studio.jsx`, `Archive.jsx`, `Study.jsx`, `ui.jsx` (מסגרת תמונה עם קווי בנייה, תג אופן), `KeyMark.jsx`.
+- `src/lib/supabase.js`: כל הגישה ל-Supabase.
+- `public/`: `logo.png` (הלוגו של ענת), `icons/` (אייקון האפליקציה: חדר, מרידיאן ושורות טקסט, בלי אותיות), `manifest.webmanifest`, `sw.js`.
+
+## Supabase: cultura-GH בלבד (ktqmwpbzcnzkhjskqisy), פרויקט משותף
+- לא לגעת בשום דבר שאינו מתחיל ב-musa. הפרויקט "Muse Meridian Studio" (qjodikwzifgqfdbhyyhy) לא בשימוש: ענת רוצה למחוק אותו. מסד הנתונים הישן של Lovable (fzpgcgbyhnximfmxicvi) גם לא בשימוש.
+- טבלה `musa_generations`: id, source, mode (board, illustration, art), image_url (יכול להיות null), hebrew_interpretation, visual_prompt, spatial_identity, created_at. RLS: קריאה ציבורית. כתיבה רק דרך הפונקציה (service role).
+- דלי ציבורי `musa-media` (`studies/<id>.<ext>`).
+- פונקציה `musa-generate` (המקור ב-`supabase/functions/musa-generate`): קריאה ופרשנות ב-claude-opus-5-5 (`ANTHROPIC_API_KEY`), תמונה ב-fal nano-banana-2 ובגיבוי flux schnell (`FAL_API_KEY`). מקור ואופן שכבר נחקרו חוזרים מהארכיון אלא אם `fresh: true`. `imageFor: <id>` משלים תמונה למחקר שנשמר בלי תמונה.
+- בלי מפתח fal המחקר נשמר בלי תמונה, עם הודעה ברורה, ובדף המחקר יש "השלמת התמונה". נכון ל-15.10.2026 אין בפרויקט סוד בשם fal בכלל (בדקתי את שמות הסודות: ANTHROPIC_API_KEY, Claude-API, math-creator). זה פוגע גם ב-mahut-generate וב-architaip-fal-image.
+- `musa-import` ו-`musa-falcheck`: חד-פעמיות. הסתיימו ומחזירות 410.
+- הארכיון הועבר מ-Lovable: 40 מחקרים ב-15 פרויקטים, כל התמונות הועתקו ל-musa-media.
+- בדיקה חיה של הפונקציה מהסביבה: דרך `extensions.http` ב-SQL (עם `http_set_curlopt('CURLOPT_TIMEOUT','170')`), כי supabase.co לא נגיש ישירות.
+- כלי ה-MCP לא מריץ DROP או REVOKE בלי אישור. להוסיף במקום למחוק.
+
+## עבודה
+- `npm run dev`, `npm run build`.
+- בדיקות: `npm run build`, `npx vite preview --port 4173`, `node tests/e2e.cjs`. מוקים לכל קריאות Supabase, service worker חסום, מחשב ונייד, בלי גלילה אופקית, בדיקת התקנה. צילומים ב-`tests/out` (לא בריפו).
+- פריסה: Vercel, ענף ייצור main. כל מיזוג ל-main מעדכן את הכתובת הראשית.
+- בכל שינוי בקבצים במטמון: להעלות את `CACHE` ב-`public/sw.js`.
+- לבנות לפי הסקיל end-to-end-builder. חריגה ממנו נאמרת מראש.
+
+## שפת עיצוב
+- נייר אפור חם, דיו כמעט שחור, וקו מרידיאן בזהב: הקו שבין המילה למרחב. זה הרעיון של כל האפליקציה: בשער המילה מימין, המרחב משמאל, והמרידיאן ביניהם.
+- צבעי האופנים נושאים משמעות ונשמרים: אוקר ללוח השראה, צפחה להמחשה, טרקוטה למרחב מחודש.
+- IBM Plex Sans Hebrew דק בכותרות גדולות, IBM Plex Mono לתוויות ומספרים, Frank Ruhl Libre לפרשנויות.
+- עומק: צל, שכבות זכוכית, גרדיאנט, קווי בנייה דקים על כל תמונה (שלישים וחתך הזהב), הנפשת כניסה. לא שטוח.
+- בלי אייקונים. החריגה היחידה: המפתח המאיר ליד כפתור שמפעיל מפתח בתשלום ("תרגום למרחב", "גרסה נוספת", "השלמת התמונה").
+- פרומפט למידג'רני תמיד עם "Documentary realism, Professional architecture photography" ועם `--no text, words, writing, frame divisions`.
+
+## הערות של ענת (לא לחזור על הטעות)
+- סרגל ניווט עליון קבוע בכל הדפים. שם האפליקציה מחזיר תמיד לשער.
+- הלוגו של ענת (`public/logo.png`) הוא כפתור ההגדרות: לחיצה פותחת כרטיס עם "העתקת קישור", "שיחת הפיתוח", "פרויקט המחקר" (כשיש קישור), "התקנת האפליקציה", ופרטי הפרויקט. בלי שורת כפתורים בסרגל. את הלוגו לא חותכים ולא מסירים לו את הרקע הלבן.
+- השער מסביר מה האפליקציה ומה היא עושה: מה זה, איך זה עובד (ארבעה שלבים), שלושת האופנים ודוגמאות מהארכיון.
+- בלי מערכת כניסה והרשאות. תוצאות נשמרות משותפות לכל המכשירים.
+- קישור "פרויקט המחקר" עוד לא ניתן. כשיינתן: `LINKS.research` ב-`src/data.js`.
+
+## מיזוג
+- ענת אישרה באופן קבוע: אחרי בדיקה ירוקה, למזג כל PR ל-main בלי לשאול.
