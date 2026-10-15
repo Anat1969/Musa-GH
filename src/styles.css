@@ -1,6 +1,6 @@
 /* מוזה: שפת עיצוב
    נייר אפור חם, דיו כמעט שחור, וקו מרידיאן בזהב: הקו שבין המילה למרחב.
-   צבעי האופנים נושאים משמעות: אוקר ללוח השראה, צפחה להמחשה, טרקוטה למרחב מחודש.
+   צבעי האופנים נושאים משמעות: אוקר ללוח חומרים, צפחה להמחשה, טרקוטה למרחב מחודש.
    IBM Plex Sans Hebrew דק בכותרות גדולות, IBM Plex Mono לתוויות ומספרים, Frank Ruhl Libre לפרשנויות. */
 :root {
   --bg: #F2F0EC;
@@ -251,6 +251,20 @@ main { padding-top: var(--nav-h); min-height: 100vh; }
 .ccard-when { align-self: end; font-size: .9rem; color: var(--ink-2); padding-top: 10px !important; border-top: 1px dashed var(--line-2); margin: 4px 22px 0; padding-inline: 0 !important; }
 .ccard-when b { color: var(--c); margin-inline-end: 6px; }
 
+/* קרוסלה: כל המקורות באותה קריאה. שלושה בעמוד במחשב, אחד וחלק במגע. השורות מתיישרות לכל האורך */
+.carousel-bar { margin-top: 18px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.carousel {
+  margin-top: 12px; display: grid; grid-auto-flow: column; grid-template-rows: repeat(5, auto);
+  grid-auto-columns: calc((100% - 2 * var(--g)) / 3); column-gap: var(--g);
+  overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-behavior: smooth;
+  padding: 6px 2px 22px; scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; cursor: grab; min-width: 0;
+}
+.carousel:active { cursor: grabbing; }
+.carousel .ccard { grid-row: span 5; scroll-snap-align: start; user-select: none; }
+.carousel .ccard img { pointer-events: none; }
+.carousel::-webkit-scrollbar { height: 6px; }
+.carousel::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 6px; }
+
 /* כיווני חשיבה בסטודיו */
 .directions { display: grid; gap: 10px; padding: 14px; border-radius: var(--r); background: rgba(255,255,255,.55); border: 1px solid var(--line); }
 .dir-head { font-size: .7rem; }
@@ -416,6 +430,7 @@ main { padding-top: var(--nav-h); min-height: 100vh; }
 
 /* ---------- טאבלט ---------- */
 @media (max-width: 1040px) {
+  .carousel { grid-auto-columns: calc((100% - var(--g)) / 2); }
   .step-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .step::after { display: none; }
   .recent-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -450,6 +465,7 @@ main { padding-top: var(--nav-h); min-height: 100vh; }
   .about-grid { grid-template-columns: minmax(0, 1fr); gap: 16px; }
   .step-list, .recent-grid, .compare-grid { grid-template-columns: minmax(0, 1fr); }
   .compare-axis { display: none; }
+  .carousel { grid-auto-columns: 82%; }
   .mode-pick { grid-template-columns: minmax(0, 1fr); }
   .toolbar { border-radius: var(--r); }
   .search { width: 100%; }

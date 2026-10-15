@@ -88,6 +88,22 @@ function mock(ctx, db, log) {
     const modeIds = await srcOf('.same-mode .ccard');
     const mrows = modeIds.map(id => db.rows.find(x => x.id === decodeURIComponent(id)));
     modeIds.length === 3 && new Set(mrows.map(x => x.source)).size === 3 && mrows.every(x => x.mode === 'illustration') ? ok('same mode, three different sources') : bad('same mode');
+    // קרוסלה: כל המקורות באותה קריאה, עם מונה מיקום ו"הקודם"/"הבא"
+    await p.locator('[data-carousel]').scrollIntoViewIfNeeded(); await p.waitForTimeout(400);
+    const posText = async () => p.locator('[data-carousel-pos]').innerText();
+    const p0 = await posText();
+    p0.endsWith('מתוך 3 מקורות') ? ok('carousel position: ' + p0) : bad('carousel pos ' + p0);
+    if (name === 'mobile') {
+      (await p.locator('[data-act=prev]').isDisabled()) && !(await p.locator('[data-act=next]').isDisabled()) ? ok('carousel at start: prev off, next on') : bad('carousel buttons');
+      await p.click('[data-act=next]'); await p.waitForTimeout(900);
+      (await posText()) !== p0 ? ok('next moves the carousel: ' + await posText()) : bad('next did not move');
+      await p.click('[data-act=prev]'); await p.waitForTimeout(900);
+      (await posText()) === p0 ? ok('prev returns') : bad('prev ' + await posText());
+    } else {
+      await p.mouse.move(2, 2); await p.waitForTimeout(500);
+      const rows = await p.$$eval('.same-mode .ccard', cs => cs.map(c => Math.round(c.querySelector('.ccard-interp').getBoundingClientRect().top)));
+      new Set(rows).size === 1 ? ok('carousel cards aligned row by row') : bad('carousel rows ' + rows);
+    }
     await p.locator('[data-same-mode=art]').click(); await p.waitForTimeout(600);
     (await srcOf('.same-mode .ccard')).every(id => db.rows.find(x => x.id === decodeURIComponent(id))?.mode === 'art') ? ok('mode switch') : bad('mode switch');
     // יישור: השורות מתיישרות בין הכרטיסים גם כשהטקסט באורך שונה
@@ -126,10 +142,10 @@ function mock(ctx, db, log) {
     (await p.evaluate(() => location.hash)) === '#archive' && (await p.locator('.project').count()) === 4 ? ok('archive: 4 projects') : bad('archive');
     // כל מקור הוא סדרה של שלוש קריאות, באותו סדר
     const order = await p.locator('.project').nth(1).locator('.study-card .mode-tag').allInnerTexts();
-    order.join('|') === 'קריאה 1: לוח השראה|קריאה 2: המחשה|קריאה 3: מרחב מחודש' ? ok('series in order: readings 1, 2, 3') : bad('order ' + order);
+    order.join('|') === 'קריאה 1: לוח חומרים|קריאה 2: המחשה|קריאה 3: מרחב מחודש' ? ok('series in order: readings 1, 2, 3') : bad('order ' + order);
     (await p.locator('.project').nth(1).locator('[data-act=complete]').count()) === 0 && (await p.locator('.project').nth(1).locator('.series-count').innerText()) === 'שלוש הקריאות' ? ok('full series: no extra button') : bad('full series');
     const wab = p.locator('.project').first();
-    (await wab.locator('[data-missing]').count()) === 2 && (await wab.locator('[data-act=complete]').allInnerTexts()).join('|') === 'השלמת קריאה 1: לוח השראה|השלמת קריאה 3: מרחב מחודש' ? ok('missing readings offer completion') : bad('missing ' + await wab.locator('[data-act=complete]').allInnerTexts());
+    (await wab.locator('[data-missing]').count()) === 2 && (await wab.locator('[data-act=complete]').allInnerTexts()).join('|') === 'השלמת קריאה 1: לוח חומרים|השלמת קריאה 3: מרחב מחודש' ? ok('missing readings offer completion') : bad('missing ' + await wab.locator('[data-act=complete]').allInnerTexts());
     (await wab.locator('.series-count').innerText()) === '1 מתוך 3 קריאות' ? ok('series count 1 of 3') : bad('count');
     (await wab.locator('[data-study] .frame-empty').innerText()).includes('ממתינה') ? ok('study without image shows waiting frame') : bad('waiting frame');
     (await p.locator('[data-act=add-study]').count()) === 0 ? ok('no "מחקר נוסף" anywhere') : bad('add-study still there');

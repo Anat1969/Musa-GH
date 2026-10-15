@@ -21,7 +21,7 @@ export default function Archive({ gens, status, filter, retry }) {
       <header className="page-head">
         <Label n="02">ארכיון</Label>
         <h1>מקורות וקריאות</h1>
-        <p className="lead">כל מקור הוא סדרה של שלוש קריאות: קריאה 1, לוח השראה. קריאה 2, המחשה. קריאה 3, מרחב מחודש. קריאה שחסרה מסומנת, ואפשר להשלים אותה.</p>
+        <p className="lead">כל מקור הוא סדרה של שלוש קריאות: קריאה 1, לוח חומרים. קריאה 2, המחשה. קריאה 3, מרחב מחודש. קריאה שחסרה מסומנת, ואפשר להשלים אותה.</p>
       </header>
 
       <div className="toolbar">

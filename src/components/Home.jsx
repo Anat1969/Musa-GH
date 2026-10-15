@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { MODES, MODE_IDS, STEPS, splitSource, groupProjects, fmtDate } from "../data.js";
 import { go, href } from "../router.js";
@@ -230,23 +230,72 @@ function SameSource({ triads }) {
   );
 }
 
-/* IV. אופן אחד, שלושה מקורות: האופן קבוע, ולכן ההבדל בין התמונות הוא ההבדל בין המקורות */
+/* IV. קריאה אחת, כל המקורות: הקריאה קבועה, ולכן ההבדל בין התמונות הוא ההבדל בין המקורות.
+   קרוסלה של כל המקורות שיש להם תמונה בקריאה הזאת: גלילה במגע ימינה ושמאלה, גרירה בעכבר, או "הקודם" ו"הבא".
+   הכרטיסים חולקים שורות (subgrid), כך שהם מיושרים לכל אורך הרצועה. */
 function SameMode({ projects }) {
   const [mode, setMode] = useState("illustration");
+  const [pos, setPos] = useState({ first: 1, last: 3 });
+  const track = useRef(null);
+  const drag = useRef(null);
   const items = useMemo(() => projects
-    .map(p => p.items.find(g => g.mode === mode && g.image_url))
-    .filter(Boolean).slice(0, 3), [projects, mode]);
+    .map(p => p.items.filter(g => g.mode === mode && g.image_url).sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0])
+    .filter(Boolean), [projects, mode]);
   const m = MODES[mode];
+
+  /* אילו כרטיסים נראים עכשיו, לפי מיקום הגלילה */
+  const measure = useCallback(() => {
+    const el = track.current;
+    if (!el) return;
+    const box = el.getBoundingClientRect();
+    const seen = [...el.children].map((c, k) => {
+      const r = c.getBoundingClientRect();
+      return r.left >= box.left - 4 && r.right <= box.right + 4 ? k : -1;
+    }).filter(k => k >= 0);
+    if (seen.length) setPos({ first: seen[0] + 1, last: seen[seen.length - 1] + 1 });
+  }, []);
+
+  useEffect(() => {
+    const el = track.current;
+    if (!el) return;
+    el.scrollTo({ left: 0 });
+    measure();
+    el.addEventListener("scroll", measure, { passive: true });
+    window.addEventListener("resize", measure);
+    return () => { el.removeEventListener("scroll", measure); window.removeEventListener("resize", measure); };
+  }, [mode, items.length, measure]);
+
+  /* עמוד אחד קדימה או אחורה. ב-RTL "הבא" נמצא משמאל, ולכן הגלילה שלילית */
+  function page(dir) {
+    const el = track.current;
+    if (!el) return;
+    el.scrollBy({ left: -dir * el.clientWidth, behavior: "smooth" });
+  }
+
+  /* גרירה בעכבר. במגע הדפדפן גולל לבד */
+  function onDown(e) {
+    if (e.pointerType !== "mouse") return;
+    drag.current = { x: e.clientX, left: track.current.scrollLeft, moved: false };
+  }
+  function onMove(e) {
+    const d = drag.current;
+    if (!d) return;
+    const dx = e.clientX - d.x;
+    if (Math.abs(dx) > 4) d.moved = true;
+    track.current.scrollLeft = d.left - dx;
+  }
+  function onUp() { setTimeout(() => { drag.current = null; }, 0); }
+
   return (
     <section className="compare same-mode" aria-labelledby="same-mode-t">
-      <Label n="IV">שלושה מקורות</Label>
-      <h2 id="same-mode-t">אותה קריאה, שלושה מקורות</h2>
+      <Label n="IV">כל המקורות</Label>
+      <h2 id="same-mode-t">אותה קריאה, כל המקורות</h2>
       <p className="compare-lead">
-        עכשיו הקריאה קבועה, ולכן ההבדל בין התמונות הוא ההבדל בין המקורות עצמם: החומר, האור והשקט של כל אחד.
+        עכשיו הקריאה קבועה, ולכן ההבדל בין התמונות הוא ההבדל בין המקורות עצמם: החומר, האור והשקט של כל אחד. גוללים ימינה ושמאלה בין כל המקורות שבארכיון.
       </p>
       <div className="compare-pick">
-        <span className="mono muted">האופן</span>
-        <div className="chips" role="tablist" aria-label="בחירת אופן">
+        <span className="mono muted">הקריאה</span>
+        <div className="chips" role="tablist" aria-label="בחירת קריאה">
           {MODE_IDS.map(id => (
             <button key={id} role="tab" aria-selected={id === mode} className={`chip chip-mode mode-${id}${id === mode ? " on" : ""}`} onClick={() => setMode(id)} data-same-mode={id}>
               <i aria-hidden="true" />{MODES[id].full}
@@ -254,23 +303,29 @@ function SameMode({ projects }) {
           ))}
         </div>
       </div>
-      <AnimatePresence mode="wait">
-        <motion.div key={mode} className={`compare-grid compare-grid-sm mode-${mode}`}
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.35, ease: EASE }}>
-          {items.map(g => {
-            const s = splitSource(g.source);
-            return (
-              <a key={g.id} className={`ccard mode-${mode}`} href={href("s", g.id)} onClick={e => { e.preventDefault(); go("s", g.id); }} data-source-card>
-                <Frame src={g.image_url} alt={`${m.name}: ${s.title}`} ratio="4 / 3" />
-                <span className="ccard-top"><span className="mono">{m.full}</span><span className="mono muted">{fmtDate(g.created_at)}</span></span>
-                <span className="ccard-name">{s.title}</span>
-                <span className="ccard-line">{s.by || "\u00a0"}</span>
-                <span className="ccard-interp">{g.hebrew_interpretation}</span>
-              </a>
-            );
-          })}
-        </motion.div>
-      </AnimatePresence>
+      <div className="carousel-bar">
+        <span className="mono muted" data-carousel-pos>{items.length ? `${pos.first}–${pos.last} מתוך ${items.length} מקורות` : ""}</span>
+        <div className="row">
+          <button className="btn btn-sm" onClick={() => page(-1)} disabled={pos.first <= 1} data-act="prev">הקודם</button>
+          <button className="btn btn-sm" onClick={() => page(1)} disabled={pos.last >= items.length} data-act="next">הבא</button>
+        </div>
+      </div>
+      <div className={`carousel mode-${mode}`} ref={track} data-carousel
+        onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerLeave={onUp}>
+        {items.map(g => {
+          const s = splitSource(g.source);
+          return (
+            <a key={g.id} className={`ccard mode-${mode}`} href={href("s", g.id)} draggable={false}
+              onClick={e => { e.preventDefault(); if (drag.current?.moved) return; go("s", g.id); }} data-source-card>
+              <Frame src={g.image_url} alt={`${m.full}: ${s.title}`} ratio="4 / 3" />
+              <span className="ccard-top"><span className="mono">{m.full}</span><span className="mono muted">{fmtDate(g.created_at)}</span></span>
+              <span className="ccard-name">{s.title}</span>
+              <span className="ccard-line">{s.by || "\u00a0"}</span>
+              <span className="ccard-interp">{g.hebrew_interpretation}</span>
+            </a>
+          );
+        })}
+      </div>
     </section>
   );
 }
