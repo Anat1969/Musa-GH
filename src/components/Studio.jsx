@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { MODES, MODE_IDS, PROCESS, SUGGESTIONS, midjourney } from "../data.js";
+import { MODES, MODE_IDS, PROCESS, DIRECTIONS, midjourney } from "../data.js";
 import { generate } from "../lib/supabase.js";
 import { go, href } from "../router.js";
 import { ModeTag, Label, PromptCopy } from "./ui.jsx";
@@ -76,11 +76,7 @@ export default function Studio({ initial, gens, onCreated }) {
               data-act="source"
               aria-label="מקור ההשראה"
             />
-            <div className="chips" aria-label="דוגמאות">
-              {SUGGESTIONS.map(s => (
-                <button type="button" key={s} className="chip" onClick={() => setSource(s.replace(", ", "\n"))}>{s}</button>
-              ))}
-            </div>
+            <Directions onPick={s => setSource(s.replace(", ", "\n"))} />
           </div>
 
           <div className="field">
@@ -164,6 +160,34 @@ export default function Studio({ initial, gens, onCreated }) {
           </AnimatePresence>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* כיווני חשיבה: בוחרים כיוון, מקבלים הנחיה קצרה ושלוש דוגמאות. לחיצה על דוגמה ממלאת את המקור */
+function Directions({ onPick }) {
+  const [dir, setDir] = useState(DIRECTIONS[0].id);
+  const d = DIRECTIONS.find(x => x.id === dir);
+  return (
+    <div className="directions">
+      <div className="dir-head mono muted">כיווני חשיבה</div>
+      <div className="chips" role="tablist" aria-label="כיווני חשיבה">
+        {DIRECTIONS.map(x => (
+          <button type="button" key={x.id} role="tab" aria-selected={x.id === dir}
+            className={`chip${x.id === dir ? " on" : ""}`} onClick={() => setDir(x.id)} data-dir={x.id}>{x.name}</button>
+        ))}
+      </div>
+      <AnimatePresence mode="wait">
+        <motion.div key={d.id} className="dir-body"
+          initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+          <p className="dir-tip">{d.tip}</p>
+          <div className="dir-items">
+            {d.items.map(it => (
+              <button type="button" key={it} className="dir-item" onClick={() => onPick(it)} data-example>{it}</button>
+            ))}
+          </div>
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }
