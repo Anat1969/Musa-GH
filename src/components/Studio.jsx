@@ -125,7 +125,7 @@ export default function Studio({ initial, gens, onCreated }) {
           <AnimatePresence mode="wait">
             {phase === "idle" && (
               <motion.div key="idle" className="out-idle" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <Blueprint />
+                <Blueprint mode={mode} />
                 <Label>מה יקרה</Label>
                 <ol className="mini-steps">
                   <li><b>קריאה.</b> Claude מזקק את הזהות המרחבית של המקור במשפט אחד.</li>
@@ -137,7 +137,7 @@ export default function Studio({ initial, gens, onCreated }) {
 
             {phase === "working" && (
               <motion.div key="work" className="out-work" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <Blueprint drawing />
+                <Blueprint drawing mode={mode} />
                 <ol className="process">
                   {PROCESS.map((t, k) => (
                     <li key={t} className={k < stage ? "is-done" : k === stage ? "is-now" : ""}>
@@ -207,17 +207,60 @@ function Directions({ onPick }) {
   );
 }
 
-/* שרטוט קווי: חתך של חדר עם קשת וחלון. בזמן עבודה הקווים נמתחים */
-function Blueprint({ drawing = false }) {
+/*
+  שרטוט קווי לכל קריאה, באותו סגנון: קווי בנייה דקים, מרידיאן בזהב, ופרט אחד בצבע הקריאה.
+  בזמן עבודה הקווים נמתחים אחד אחרי השני (pathLength=1, כך שכל קו נמתח באותו קצב).
+  קריאה 1, לוח השראה: שדה של פרגמנטים, חומר בחתך, גרעין עץ, מחקר אור.
+  קריאה 2, המחשה: חתך של חדר עם קשת וחלון, ואור שנופל על הרצפה.
+  קריאה 3, מרחב מחודש: פרספקטיבה של חדר עכשווי, פתח לחוץ, ספה נמוכה וגומחה.
+*/
+const DRAWINGS = {
+  board: [
+    ["M30 30 H120 V100 H30 Z"],
+    ["M38 100 L108 30 M30 92 L92 30 M30 76 L76 30 M30 60 L60 30 M54 100 L120 34 M70 100 L120 50 M86 100 L120 66", "thin"],
+    ["M135 30 H198 V70 H135 Z"],
+    ["M148 42 h1 M162 42 h1 M176 42 h1 M190 42 h1 M155 52 h1 M169 52 h1 M183 52 h1 M148 62 h1 M162 62 h1 M176 62 h1 M190 62 h1", "dots"],
+    ["M135 82 H198 V150 H135 Z"],
+    ["M140 96 C158 90 176 102 194 95 M140 112 C160 106 174 118 194 110 M140 128 C156 122 178 134 194 126 M140 142 C160 138 176 146 194 141", "thin"],
+    ["M218 30 H290 V115 H218 Z"],
+    ["M254 52 a20 20 0 1 1 -0.1 0", "accent"],
+    ["M254 82 L254 108 M240 76 L226 98 M268 76 L282 98", "thin"],
+    ["M30 114 H120 V150 H30 Z"],
+    ["M30 124 H120 M30 134 H120 M30 142 H120", "thin"],
+    ["M218 126 H290 V150 H218 Z"],
+    ["M207 12 V172", "meridian"],
+  ],
+  illustration: [
+    ["M20 160 H300"],
+    ["M40 160 V40 H280 V160"],
+    ["M70 160 V95 a35 35 0 0 1 70 0 V160"],
+    ["M190 70 H250 V120 H190 Z", "accent"],
+    ["M190 95 H250 M220 70 V120", "thin"],
+    ["M190 120 L150 160 M250 120 L222 160 M150 160 H222", "light"],
+    ["M232 160 V140 H262 V160 M232 140 V122", "plain"],
+    ["M40 40 L160 12 L280 40", "thin"],
+    ["M160 12 V180", "meridian"],
+  ],
+  art: [
+    ["M110 52 H230 V128 H110 Z"],
+    ["M18 14 L110 52 M302 14 L230 52 M18 170 L110 128 M302 170 L230 128", "thin"],
+    ["M178 52 V128 M204 52 V128", "accent"],
+    ["M204 100 H230 M178 100 H160", "thin"],
+    ["M44 72 L76 80 V112 L44 108 Z"],
+    ["M60 92 h0.1", "dots"],
+    ["M78 160 L96 146 H190 L208 160 Z M96 146 V138 H190 V146"],
+    ["M120 152 H170", "thin"],
+    ["M160 12 V178", "meridian"],
+  ],
+};
+
+function Blueprint({ drawing = false, mode = "illustration" }) {
+  const paths = DRAWINGS[mode] || DRAWINGS.illustration;
   return (
-    <svg className={`blueprint${drawing ? " drawing" : ""}`} viewBox="0 0 320 180" aria-hidden="true">
-      <path d="M20 160 H300" />
-      <path d="M40 160 V40 H280 V160" />
-      <path d="M70 160 V95 a35 35 0 0 1 70 0 V160" />
-      <path d="M190 70 H250 V120 H190 Z" />
-      <path d="M190 95 H250 M220 70 V120" className="thin" />
-      <path d="M40 40 L160 12 L280 40" className="thin" />
-      <path d="M160 12 V180" className="meridian" />
+    <svg className={`blueprint mode-${mode}${drawing ? " drawing" : ""}`} viewBox="0 0 320 180" aria-hidden="true" data-blueprint={mode}>
+      {paths.map(([d, cls], k) => (
+        <path key={mode + k} d={d} className={cls || undefined} pathLength="1" style={{ "--i": k }} />
+      ))}
     </svg>
   );
 }
