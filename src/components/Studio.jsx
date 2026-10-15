@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { MODES, MODE_IDS, PROCESS, DIRECTIONS, midjourney } from "../data.js";
 import { generate } from "../lib/supabase.js";
-import { go, href } from "../router.js";
+import { go, href, parseStudioItem } from "../router.js";
 import { ModeTag, Label, PromptCopy } from "./ui.jsx";
 import KeyMark from "./KeyMark.jsx";
 import PasteFrame from "./PasteFrame.jsx";
@@ -10,8 +10,9 @@ import PasteFrame from "./PasteFrame.jsx";
 const STAGE_MS = [4000, 9000, 9000, 22000];
 
 export default function Studio({ initial, gens, onCreated }) {
-  const [source, setSource] = useState(initial || "");
-  const [mode, setMode] = useState("illustration");
+  const start = parseStudioItem(initial);
+  const [source, setSource] = useState(start.source);
+  const [mode, setMode] = useState(start.mode || "board");
   const [phase, setPhase] = useState("idle"); // idle | working | done | error
   const [stage, setStage] = useState(0);
   const [result, setResult] = useState(null);
@@ -19,10 +20,17 @@ export default function Studio({ initial, gens, onCreated }) {
   const timers = useRef([]);
   const outRef = useRef(null);
 
-  useEffect(() => { if (initial) setSource(initial); }, [initial]);
+  useEffect(() => {
+    const st = parseStudioItem(initial);
+    if (st.source) setSource(st.source);
+    if (st.mode) setMode(st.mode);
+    /* קישור חדש לסטודיו מתחיל מסך נקי, גם אם התוצאה הקודמת עוד מוצגת */
+    if (initial) { setPhase("idle"); setResult(null); setError(""); }
+  }, [initial]);
   useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
-  /* המקור כבר בארכיון: אילו אופנים כבר נחקרו */
+  /* המקור כבר בארכיון: אילו קריאות כבר נעשו, והאחרונה בכל קריאה */
+  const latestOf = id => gens.filter(g => g.source.trim() === source.trim() && g.mode === id).sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0];
   const done = useMemo(() => {
     const key = source.trim();
     return new Set(gens.filter(g => g.source.trim() === key).map(g => g.mode));
@@ -80,14 +88,14 @@ export default function Studio({ initial, gens, onCreated }) {
           </div>
 
           <div className="field">
-            <Label n="B">אופן התרגום</Label>
-            <div className="mode-pick" role="radiogroup" aria-label="אופן התרגום">
+            <Label n="B">הקריאה</Label>
+            <div className="mode-pick" role="radiogroup" aria-label="הקריאה">
               {MODE_IDS.map(id => {
                 const m = MODES[id];
                 return (
                   <button type="button" key={id} role="radio" aria-checked={mode === id}
                     className={`mode-opt mode-${id}${mode === id ? " on" : ""}`} onClick={() => setMode(id)} data-mode={id}>
-                    <span className="mode-opt-top"><span className="mono">{m.n}</span>{done.has(id) && <span className="mono done-mark">בארכיון</span>}</span>
+                    <span className="mode-opt-top"><span className="mono">{m.reading}</span>{done.has(id) && <span className="mono done-mark">בארכיון</span>}</span>
                     <span className="mode-opt-name">{m.name}</span>
                     <span className="mode-opt-line">{m.line}</span>
                   </button>
@@ -99,11 +107,18 @@ export default function Studio({ initial, gens, onCreated }) {
           <button className="btn btn-dark btn-lg btn-go" type="submit" disabled={!ready || phase === "working"} data-act="generate">
             {phase === "working" ? "מתרגם למרחב" : "תרגום למרחב"}<KeyMark />
           </button>
-          <p className="muted small">
-            {done.has(mode)
-              ? "המקור הזה כבר נחקר באופן הזה. התרגום יחזיר את המחקר מהארכיון, ומשם אפשר לבקש גרסה נוספת."
-              : "תרגום חדש לוקח בערך דקה: קריאה, כתיבת הפרומפט וצילום."}
-          </p>
+          {done.size === 3 && phase !== "done" ? (
+            <p className="note" data-note="complete">
+              שלוש הקריאות של המקור הזה כבר בארכיון.{" "}
+              <a className="link" href={href("s", latestOf(mode).id)} onClick={e => { e.preventDefault(); go("s", latestOf(mode).id); }}>לפתיחת {MODES[mode].full}</a>
+            </p>
+          ) : (
+            <p className="muted small">
+              {done.has(mode)
+                ? `${MODES[mode].full} של המקור הזה כבר בארכיון. התרגום יחזיר אותה, ומשם אפשר לבקש גרסה נוספת.`
+                : `תרגום חדש לוקח בערך דקה: קריאה, כתיבת הפרומפט וצילום.${done.size ? ` ${MODES[mode].full} תשלים את הסדרה של המקור הזה.` : ""}`}
+            </p>
+          )}
         </form>
 
         <div className="panel studio-out" aria-live="polite" ref={outRef}>
@@ -143,7 +158,7 @@ export default function Studio({ initial, gens, onCreated }) {
 
             {phase === "done" && g && (
               <motion.div key={g.id} className="out-done" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                {result.cached && <p className="note">המקור הזה כבר נחקר באופן הזה. זה המחקר מהארכיון.</p>}
+                {result.cached && <p className="note">{MODES[g.mode]?.full} של המקור הזה כבר הייתה בארכיון. זו היא.</p>}
                 {result.imageError && <p className="note" data-note="image">{result.imageError}</p>}
                 <PasteFrame gen={g} onSaved={x => { onCreated(x); setResult(r => ({ ...r, generation: x, imageError: "" })); }} ratio="16 / 10">
                   <figcaption className="glass"><ModeTag mode={g.mode} plain /></figcaption>
@@ -153,7 +168,7 @@ export default function Studio({ initial, gens, onCreated }) {
                 <PromptCopy prompt={g.visual_prompt} toMj={midjourney} />
                 <div className="row">
                   <a className="btn btn-dark" href={href("s", g.id)} onClick={e => { e.preventDefault(); go("s", g.id); }} data-act="open-study">לפתיחת המחקר</a>
-                  {result.cached && <button className="btn" onClick={() => run(true)} data-act="fresh">גרסה נוספת<KeyMark /></button>}
+                  {result.cached && <button className="btn" onClick={() => run(true)} data-act="fresh">גרסה נוספת של {MODES[g.mode]?.reading}<KeyMark /></button>}
                 </div>
               </motion.div>
             )}

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { MODES } from "../data.js";
 
 /* תמונה בתוך מסגרת עם קווי בנייה: שלישים, חתך הזהב והמרידיאן. נכנסת בעמעום כשהיא נטענת */
-export function Frame({ src, alt = "", ratio = "16 / 9", lines = true, eager = false, className = "", children }) {
+export function Frame({ src, alt = "", ratio = "16 / 9", lines = true, eager = false, className = "", emptyText = "", children }) {
   const [loaded, setLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
   return (
@@ -14,7 +14,7 @@ export function Frame({ src, alt = "", ratio = "16 / 9", lines = true, eager = f
               <path d="M20 160 H300" /><path d="M40 160 V40 H280 V160" /><path d="M70 160 V95 a35 35 0 0 1 70 0 V160" />
               <path d="M190 70 H250 V120 H190 Z" /><path d="M160 12 V180" className="m" />
             </svg>
-            <span>{src ? "התמונה לא נטענה" : "התמונה ממתינה"}</span>
+            <span>{src ? "התמונה לא נטענה" : emptyText || "התמונה ממתינה"}</span>
           </div>}
       {lines && (
         <svg className="frame-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
@@ -33,7 +33,7 @@ export function ModeTag({ mode, plain = false }) {
   const m = MODES[mode] || MODES.board;
   return (
     <span className={`mode-tag mode-${m.id}${plain ? " plain" : ""}`}>
-      <i aria-hidden="true" />{m.name}
+      <i aria-hidden="true" />{m.full}
     </span>
   );
 }

@@ -22,3 +22,14 @@ export function go(page, item) {
   if (location.hash !== h && !(h === "#" && !location.hash)) history.pushState(null, "", h);
   window.dispatchEvent(new Event("hashchange"));
 }
+
+/* הסטודיו עם מקור מוכן, ואם צריך גם קריאה מסוימת: #studio/<קריאה>/<מקור> */
+const READINGS = ["board", "illustration", "art"];
+export function studioItem(source, mode) {
+  return mode ? `${mode}/${source}` : source;
+}
+export function parseStudioItem(item = "") {
+  const cut = item.indexOf("/");
+  const head = cut < 0 ? "" : item.slice(0, cut);
+  return READINGS.includes(head) ? { mode: head, source: item.slice(cut + 1) } : { mode: "", source: item };
+}

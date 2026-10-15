@@ -124,20 +124,27 @@ function mock(ctx, db, log) {
     // ניווט בטאבים
     await p.click('.tab:has-text("ארכיון")'); await p.waitForTimeout(900);
     (await p.evaluate(() => location.hash)) === '#archive' && (await p.locator('.project').count()) === 4 ? ok('archive: 4 projects') : bad('archive');
-    (await p.locator('.project').nth(1).locator('.study-card').count()) === 3 ? ok('project groups 3 studies') : bad('group');
-    (await p.locator('.project').first().locator('.frame-empty').innerText()).includes('ממתינה') ? ok('study without image shows waiting frame') : bad('waiting frame');
+    // כל מקור הוא סדרה של שלוש קריאות, באותו סדר
+    const order = await p.locator('.project').nth(1).locator('.study-card .mode-tag').allInnerTexts();
+    order.join('|') === 'קריאה 1: לוח השראה|קריאה 2: המחשה|קריאה 3: מרחב מחודש' ? ok('series in order: readings 1, 2, 3') : bad('order ' + order);
+    (await p.locator('.project').nth(1).locator('[data-act=complete]').count()) === 0 && (await p.locator('.project').nth(1).locator('.series-count').innerText()) === 'שלוש הקריאות' ? ok('full series: no extra button') : bad('full series');
+    const wab = p.locator('.project').first();
+    (await wab.locator('[data-missing]').count()) === 2 && (await wab.locator('[data-act=complete]').allInnerTexts()).join('|') === 'השלמת קריאה 1: לוח השראה|השלמת קריאה 3: מרחב מחודש' ? ok('missing readings offer completion') : bad('missing ' + await wab.locator('[data-act=complete]').allInnerTexts());
+    (await wab.locator('.series-count').innerText()) === '1 מתוך 3 קריאות' ? ok('series count 1 of 3') : bad('count');
+    (await wab.locator('[data-study] .frame-empty').innerText()).includes('ממתינה') ? ok('study without image shows waiting frame') : bad('waiting frame');
+    (await p.locator('[data-act=add-study]').count()) === 0 ? ok('no "מחקר נוסף" anywhere') : bad('add-study still there');
     await p.click('[data-filter=art]'); await p.waitForTimeout(600);
-    (await p.evaluate(() => location.hash)) === '#archive/art' && (await p.locator('.study-card').count()) === 3 ? ok('filter by mode in url') : bad('filter');
+    (await p.evaluate(() => location.hash)) === '#archive/art' && (await p.locator('.project').count()) === 3 ? ok('filter by reading in url') : bad('filter');
     await p.fill('.search', 'קרנינה'); await p.waitForTimeout(300);
     (await p.locator('.project').count()) === 1 ? ok('search') : bad('search');
     await p.fill('.search', 'אין כזה'); await p.waitForTimeout(300);
-    (await p.locator('.state').innerText()).includes('אין מחקרים') ? ok('empty search state') : bad('empty');
+    (await p.locator('.state').innerText()).includes('אין מקורות') ? ok('empty search state') : bad('empty');
     await p.fill('.search', ''); await p.click('.chip:has-text("הכול")'); await p.waitForTimeout(500);
     await hs('archive');
     await p.screenshot({ path: `${S}/${name}-archive.png` });
 
     // מחקר בלי תמונה: פרומפט למידג'רני והשלמת התמונה
-    await p.locator('.project').first().locator('.study-card').first().click(); await p.waitForTimeout(1000);
+    await p.locator('.project').first().locator('[data-study]').first().click(); await p.waitForTimeout(1000);
     await p.click('[data-act=copy-mj]'); await p.waitForTimeout(200);
     const mj = await p.evaluate(() => navigator.clipboard.readText());
     mj.includes('Documentary realism, Professional architecture photography') && mj.includes('--no text, words, writing, frame divisions') ? ok('midjourney prompt with suffix and negatives') : bad('mj ' + mj);
@@ -150,7 +157,8 @@ function mock(ctx, db, log) {
     // מחקר
     await p.locator('.project').nth(1).locator('.study-card').first().click(); await p.waitForTimeout(1200);
     (await p.evaluate(() => location.hash)).startsWith('#s/') && (await p.locator('.study-title').count()) ? ok('study page opens') : bad('study');
-    (await p.locator('.siblings .study-card').count()) === 2 ? ok('siblings in project') : bad('siblings');
+    (await p.locator('.siblings .study-card').count()) === 3 && (await p.locator('.siblings .is-here').count()) === 1 ? ok('study shows its series, itself marked') : bad('siblings');
+    (await p.locator('.actions [data-act=complete]').count()) === 0 ? ok('full series: no completion button on study') : bad('complete on full');
     await p.click('[data-act=copy-prompt]'); await p.waitForTimeout(200);
     (await p.evaluate(() => navigator.clipboard.readText())).startsWith('Prompt') ? ok('copy prompt') : bad('copy prompt');
     (await p.locator('.study [data-act=fresh] .key-mark').count()) === 1 ? ok('key mark on fresh') : bad('key mark');
@@ -176,18 +184,24 @@ function mock(ctx, db, log) {
     await hs('study');
     await p.screenshot({ path: `${S}/${name}-study.png` });
     await p.screenshot({ path: `${S}/${name}-study-full.png`, fullPage: true });
-    // מחקר נוסף לפרויקט: לסטודיו עם מקור מוכן
-    await p.click('.actions [data-act=add-study]'); await p.waitForTimeout(800);
-    const src = await p.inputValue('[data-act=source]');
-    (await p.evaluate(() => location.hash)).startsWith('#studio/') && src.length > 2 ? ok('add study prefills studio') : bad('prefill ' + src);
-    (await p.locator('.done-mark').count()) === 3 ? ok('modes already in archive marked') : bad('done marks ' + await p.locator('.done-mark').count());
-
-    // סטודיו: מקור קיים מחזיר מהארכיון, ואז גרסה נוספת
-    await p.click('[data-mode=board]');
+    // השלמת קריאה חסרה: מדף המחקר של וואבי־סאבי לסטודיו, עם המקור והקריאה הנכונה
+    await p.goto(U + '#s/20000000-0000-4000-8000-000000000001'); await p.waitForTimeout(1200);
+    (await p.locator('.actions [data-act=complete]').count()) === 2 ? ok('study offers the 2 missing readings') : bad('complete buttons');
+    await p.locator('.actions [data-act=complete]').nth(1).click(); await p.waitForTimeout(800);
+    (await p.inputValue('[data-act=source]')) === 'וואבי־סאבי' && (await p.locator('[data-mode=art]').getAttribute('aria-checked')) === 'true' ? ok('completion opens studio with source and reading 3') : bad('prefill ' + await p.evaluate(() => location.hash));
+    (await p.locator('.done-mark').count()) === 1 ? ok('reading already done is marked') : bad('done marks ' + await p.locator('.done-mark').count());
     await p.click('[data-act=generate]'); await p.waitForTimeout(900);
-    db.calls.at(-1).fresh === false && (await p.locator('.out-done .note').count()) === 1 ? ok('cached study returned with note') : bad('cached');
+    const made = db.calls.at(-1);
+    made.mode === 'art' && made.source === 'וואבי־סאבי' && made.fresh === false ? ok('reading 3 created for the series') : bad('complete gen');
+    // סדרה שלמה: הסטודיו אומר שהיא כבר בארכיון, וגרסה נוספת עדיין אפשרית
+    const anna = db.rows.find(x => x.source.startsWith('אנה'));
+    await p.goto(U + '#studio/board/' + encodeURIComponent(anna.source)); await p.waitForTimeout(900);
+    (await p.locator('[data-note=complete]').count()) === 1 ? ok('full series noted in studio') : bad('complete note');
+    await p.click('[data-act=generate]'); await p.waitForTimeout(900);
+    db.calls.at(-1).fresh === false && (await p.locator('.out-done .note').count()) === 1 ? ok('cached reading returned with note') : bad('cached');
+    const nBefore = db.rows.length;
     await p.click('.out-done [data-act=fresh]'); await p.waitForTimeout(900);
-    db.calls.at(-1).fresh === true && db.rows.length === 11 ? ok('fresh version created') : bad('fresh');
+    db.calls.at(-1).fresh === true && db.rows.length === nBefore + 1 ? ok('fresh version created') : bad('fresh');
 
     // סטודיו: מקור חדש
     await p.click('.tab:has-text("סטודיו")'); await p.waitForTimeout(700);
