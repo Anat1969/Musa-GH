@@ -24,46 +24,68 @@ type Mode = typeof MODES[number];
 
 const SUFFIX = "Documentary realism, professional architecture photography. No text, no words, no writing, no frame divisions.";
 
-/* Three readings of one source, each pushed to its extreme:
-   1 board: a material composition that stands as a work of art.
-   2 illustration: the authentic, archaic place where the source lived, untouched by time.
-   3 art: the same DNA translated into radical contemporary minimalism. */
+/* Three readings of one source, each specific to it and pushed to its extreme:
+   1 board: an inspiration board composed and photographed as a work of art.
+   2 illustration ("yesterday"): the real place where the source lived and worked, authentic and nostalgic,
+     photographed as a fine photograph of its own era.
+   3 art ("tomorrow"): the same life, longed for and upgraded, as a pragmatic contemporary space.
+   Generic rooms are the failure mode: the model must first fix concrete anchors (typology, place, period,
+   daily activity, signature object) and build the image from them. */
 const BRIEFS: Record<Mode, string> = {
-  board: `A material composition for [INPUT], made and photographed as a work of art, not as a design board.
-Real physical samples, chosen for what they carry of [INPUT]: stone, lime plaster, timber, metal, glass, paper, textile, earth, ash, wax. Each cut, broken or folded so its section and its surface both show.
-They are arranged on one ground (a raw plinth, a plaster slab or a worn table) as a single abstract composition, with the discipline of a still life by Giorgio Morandi, the layered planes of a Ben Nicholson relief and the restraint of an Isamu Noguchi garden: a clear centre of gravity, one deliberate tension, generous negative space, a rhythm of large and small, heavy and light.
-The colour field is drawn from the emotional register of [INPUT]: two or three tones and one dissonant accent. One gesture belongs only to [INPUT] and is unmistakable.
-Light: a single raking museum light from one side, deep soft shadows, every texture legible.
-Shot from slightly above, like a sculpture in a catalogue raisonné, medium format, quiet, gallery-grade. It must read as an artwork that could hang in a museum. No labels, no grid, no collage of photographs, no frames.`,
-  illustration: `The authentic, archaic place where the world of [INPUT] was actually lived, as if found untouched and photographed today.
-Everything is true to the period, region and climate of [INPUT]: vernacular construction, hand-made materials, lime wash over rough stone or earth, smoke-darkened beams, hand-worn thresholds, iron, clay, wool, unbleached linen. Patina everywhere; nothing restored, nothing new, no object later than the time of [INPUT].
-Objects that belong to [INPUT] are left mid-use, as if the inhabitant has just stepped out.
-Light is only what that time had: daylight from one small deep window, or a single flame. Dust in the air, deep shadow, warm and cold zones in the same room.
-Documentary, archival quality: large format camera, natural film grain, honest colour, oblique view at 30 to 45 degrees to the main wall, slightly below eye level, strong foreground texture, depth that falls into darkness.
-No people, no modern objects, no restoration gloss, no HDR, no computed symmetry.`,
-  art: `A contemporary residence that translates the DNA of [INPUT] into radical minimalism: one idea, built with absolute restraint.
-Architecture by reduction: monolithic surfaces in one or two materials only (micro-cement, fine lime plaster, pale stone, bleached oak), concealed details, no visible frames, no skirting, no handles. One frameless full-height opening to the outside, landscape or sky as the only image.
-Almost empty: at most one low piece of furniture and one object that carries [INPUT]. The rest is proportion, light and silence, in the spirit of John Pawson and Tadao Ando.
-Light: soft directional daylight that turns a wall into a gradient; one precise shadow line.
-Photography: medium format, calm, perfectly controlled verticals, a single-point or gentle two-point view, high-key but rich in tone.
-Publication ready as a lead image in an architecture monograph. No clutter, no decoration, no people, no HDR, no text.`,
+  board: `An inspiration board for [INPUT], composed and photographed as a work of art.
+Every fragment is traceable to a concrete fact of [INPUT] (its place, its trade, its objects, its landscape, its colours), never a generic sample: real materials cut to show section and surface, found objects of its world, a plant or mineral of its landscape, a fragment of a period photograph or map with no legible text, one light study.
+All of it arranged on one ground as a single abstract composition, with the discipline of a Giorgio Morandi still life, the layered planes of a Ben Nicholson relief and the restraint of an Isamu Noguchi garden: a clear centre of gravity, one deliberate tension, generous negative space.
+Colour field drawn from [INPUT]: two or three tones and one dissonant accent.
+Light: a single raking museum light, deep soft shadows. Shot from slightly above, medium format, gallery-grade, photogenic and moving. No labels, no grid, no frames, no text.`,
+  illustration: `Yesterday: the real place where [INPUT] lived or worked, authentic and nostalgic, as it was in its time.
+Build it from the anchors, not from a stock room. The building type is whatever truly belongs to [INPUT]: a studio, a rehearsal room, a newsroom, a café table, a ship cabin, a kibbutz dining hall, a rooftop, a shop, a classroom, a stage wing, a field tent, a garden. The city or landscape, the decade and the daily activity are specific, and the space is organised by that activity: its furniture, tools, worn paths and traces are evidence of a working life, so particular that no other source could share this image.
+Materials, objects, climate and light exactly of that place and decade; honest patina, not staged.
+Photograph it as a great photographer of that era would have: the camera, film stock, colour or black and white, grain and tonality of the decade (for example 1930s large-format black and white, 1960s Kodachrome, 1980s Fujichrome). One decisive composition, photogenic, emotional, nostalgic.
+No people (presence only implied), no anachronisms, no text.`,
+  art: `Tomorrow: the space [INPUT]'s world longs for, built as a precise contemporary upgrade of the same life.
+Start from the same anchors as yesterday (building type, place, daily activity) and design their next-decade version: the same activity made easier, lighter and more generous, with real furniture and equipment for it, plus one longing of [INPUT] made real (the sea at the window, silence, a stage, a library, a garden, height, light).
+Pragmatic and livable, not an empty gallery. Warm, refined contemporary architecture; today's materials and technology used with restraint; one signature element that could only belong to [INPUT].
+Photography: aspirational editorial architecture photography of now, medium format digital, crisp and luminous, golden hour or blue hour, inspiring and moving.
+No people, no clutter, no text.`,
 };
 
 const SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["spatial_identity", "visual_prompt", "hebrew_interpretation"],
+  required: ["anchors", "spatial_identity", "visual_prompt", "hebrew_interpretation"],
   properties: {
+    anchors: {
+      type: "object",
+      additionalProperties: false,
+      required: ["typology", "place", "period", "activity", "signature"],
+      properties: {
+        typology: { type: "string" },
+        place: { type: "string" },
+        period: { type: "string" },
+        activity: { type: "string" },
+        signature: { type: "string" },
+      },
+    },
     spatial_identity: { type: "string" },
     visual_prompt: { type: "string" },
     hebrew_interpretation: { type: "string" },
   },
 };
 
-const system = (mode: Mode) => `You are an architectural ontologist. You translate a source of inspiration (a book, a song, an author, a person, a philosophical thought) into space. Be total: push the brief below to its extreme, never toward a safe middle.
-1. spatial_identity: one Hebrew sentence, up to 20 words, naming the spatial essence of the source: which space, matter and light it is.
-2. visual_prompt: one vivid English paragraph an image model can render directly, following the brief below. Replace [INPUT] with the actual source; never output the token [INPUT]. Every detail must contribute to the image.
-3. hebrew_interpretation: natural, precise Hebrew, up to 30 words, that links the specific source to the chosen spatial and material elements. Not flowery, no exclamation marks.
+const system = (mode: Mode) => `You are an architectural ontologist. You translate a source of inspiration (a book, a song, an author, a person, a place, a philosophical thought) into space. Be total: push the brief to its extreme, never toward a safe middle.
+
+Every source must get a different space. Before writing, fix the anchors from facts about the source (for a fictional work, from its world):
+- typology: the specific building or room type, and why it belongs to this source.
+- place: city, region or landscape.
+- period: the decade or year.
+- activity: what was actually done there every day.
+- signature: one object or spatial element that only this source could have.
+Never fall back on stock interiors. Do not use any of these unless they are factually specific to this source: a whitewashed room with one small window, a guitar leaning on a wall, stacks of books, a ceramic mug on a sill, a linen sofa, an olive-wood table, travertine, a micro-cement box, reel-to-reel recorders, dust in a light beam.
+
+Then write:
+1. spatial_identity: one Hebrew sentence, up to 22 words, naming the typology, the place and the time concretely.
+2. visual_prompt: one vivid English paragraph an image model can render directly, built from the anchors and following the brief below. Replace [INPUT] with the actual source; never output the token [INPUT]. Every detail must contribute to the image.
+3. hebrew_interpretation: natural, precise Hebrew, up to 35 words. Pragmatic: name the concrete spatial decisions and the fact about the source that justifies each one. No poetic generalities, no exclamation marks.
 
 BRIEF:
 ${BRIEFS[mode]}`;
@@ -198,7 +220,7 @@ Deno.serve(async (req) => {
   if (!apiKey) return json({ error: "ANTHROPIC_API_KEY is not configured" }, 500);
   const client = new Anthropic({ apiKey });
 
-  let out: { spatial_identity: string; visual_prompt: string; hebrew_interpretation: string };
+  let out: { anchors: Record<string, string>; spatial_identity: string; visual_prompt: string; hebrew_interpretation: string };
   try {
     const response = await client.beta.messages.create({
       model: "claude-opus-5-5",
@@ -222,7 +244,8 @@ Deno.serve(async (req) => {
   const errs: string[] = [];
   const image_url = await makeImage(out.visual_prompt, id, errs);
 
-  const row = { id, source, mode, image_url, ...out };
+  const { anchors: _anchors, ...reading } = out;
+  const row = { id, source, mode, image_url, ...reading };
   const ins = await fetch(`${SB_URL}/rest/v1/musa_generations`, {
     method: "POST",
     headers: { ...SB_HEADERS, "Content-Type": "application/json", Prefer: "return=representation" },

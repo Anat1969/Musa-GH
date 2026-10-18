@@ -142,10 +142,10 @@ function mock(ctx, db, log) {
     (await p.evaluate(() => location.hash)) === '#archive' && (await p.locator('.project').count()) === 4 ? ok('archive: 4 projects') : bad('archive');
     // כל מקור הוא סדרה של שלוש קריאות, באותו סדר
     const order = await p.locator('.project').nth(1).locator('.study-card .mode-tag').allInnerTexts();
-    order.join('|') === 'קריאה 1: לוח חומרים|קריאה 2: המחשה|קריאה 3: מרחב מחודש' ? ok('series in order: readings 1, 2, 3') : bad('order ' + order);
+    order.join('|') === 'קריאה 1: לוח השראה|קריאה 2: מרחב של אתמול|קריאה 3: מרחב של מחר' ? ok('series in order: readings 1, 2, 3') : bad('order ' + order);
     (await p.locator('.project').nth(1).locator('[data-act=complete]').count()) === 0 && (await p.locator('.project').nth(1).locator('.series-count').innerText()) === 'שלוש הקריאות' ? ok('full series: no extra button') : bad('full series');
     const wab = p.locator('.project').first();
-    (await wab.locator('[data-missing]').count()) === 2 && (await wab.locator('[data-act=complete]').allInnerTexts()).join('|') === 'השלמת קריאה 1: לוח חומרים|השלמת קריאה 3: מרחב מחודש' ? ok('missing readings offer completion') : bad('missing ' + await wab.locator('[data-act=complete]').allInnerTexts());
+    (await wab.locator('[data-missing]').count()) === 2 && (await wab.locator('[data-act=complete]').allInnerTexts()).join('|') === 'השלמת קריאה 1: לוח השראה|השלמת קריאה 3: מרחב של מחר' ? ok('missing readings offer completion') : bad('missing ' + await wab.locator('[data-act=complete]').allInnerTexts());
     (await wab.locator('.series-count').innerText()) === '1 מתוך 3 קריאות' ? ok('series count 1 of 3') : bad('count');
     (await wab.locator('[data-study] .frame-empty').innerText()).includes('ממתינה') ? ok('study without image shows waiting frame') : bad('waiting frame');
     (await p.locator('[data-act=add-study]').count()) === 0 ? ok('no "מחקר נוסף" anywhere') : bad('add-study still there');
