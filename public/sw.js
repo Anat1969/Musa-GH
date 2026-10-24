@@ -1,5 +1,5 @@
 /* מטמון פשוט: הדף תמיד מהרשת כשאפשר, קבצי בנייה, אייקונים ותמונות הארכיון מהמטמון */
-const CACHE = "musa-v9";
+const CACHE = "musa-v10";
 
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", e => {

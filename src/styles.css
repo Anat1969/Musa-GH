@@ -108,30 +108,6 @@ main { padding-top: var(--nav-h); min-height: 100vh; }
 .tab.on .tab-n { color: #E9B657; opacity: 1; }
 
 .settings { position: relative; justify-self: end; flex: 0 0 auto; }
-.logo-btn {
-  display: block; padding: 0; border: 0; border-radius: 7px; background: #fff; cursor: pointer;
-  box-shadow: 0 0 0 1px rgba(0,0,0,.08), 0 6px 16px -8px rgba(0,0,0,.35); transition: transform .15s var(--ease), box-shadow .2s;
-}
-.logo-btn:hover, .logo-btn.on { transform: translateY(-1px); box-shadow: 0 0 0 2px var(--ink), 0 10px 22px -10px rgba(0,0,0,.45); }
-.brand-logo { display: block; width: auto; height: 48px; border-radius: 6px; }
-.settings-card {
-  position: absolute; top: calc(100% + 12px); inset-inline-end: 0; z-index: 60; width: min(340px, calc(100vw - 32px));
-  background: linear-gradient(180deg, #FFFFFF, #F8F7F4); border: 1px solid rgba(0,0,0,.08); border-radius: var(--r);
-  box-shadow: var(--sh-3); padding: 18px; transform-origin: top left;
-  max-height: calc(100vh - var(--nav-h) - 24px); overflow: auto;
-}
-.settings-list { display: grid; gap: 6px; }
-.settings-list .btn { justify-content: flex-start; }
-.settings-note { display: block; padding: 4px 2px; line-height: 1.5; }
-.settings-sep { height: 1px; background: var(--line); margin: 14px 0 12px; }
-.proj { margin: 0; display: grid; gap: 9px; }
-.proj > div { display: grid; gap: 1px; }
-.proj dt { font-size: .74rem; color: var(--ink-3); }
-.proj dd { margin: 0; display: grid; font-size: .9rem; }
-.proj a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--line-2); justify-self: start; }
-.proj a:hover { border-color: var(--ink); }
-.proj span[dir=ltr] { justify-self: start; font-family: var(--mono); font-size: .8rem; }
-.proj small { font-size: .76rem; color: var(--ink-3); line-height: 1.45; }
 
 /* ---------- מסגרת תמונה עם קווי בנייה ---------- */
 .frame {
@@ -448,7 +424,6 @@ main { padding-top: var(--nav-h); min-height: 100vh; }
   .tab { flex: 1 1 0; justify-content: center; padding: 6px 8px; }
   .settings { grid-column: 2; grid-row: 1; }
   .brand { grid-row: 1; }
-  .brand-logo { height: 38px; }
   .app-mark { width: 32px; height: 32px; border-radius: 8px; }
   .brand-name { font-size: 1.4rem; }
   .meridian { grid-template-columns: minmax(0, 1fr); padding: 14px; }
