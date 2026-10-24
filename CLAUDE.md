@@ -5,8 +5,8 @@
 ## מבנה
 - Vite + React + framer-motion + supabase-js. JS ו-CSS רגיל (`src/styles.css`). בלי Tailwind, בלי shadcn.
 - `src/router.js`: הכתובת היא המצב. `#` שער, `#studio`, `#studio/<מקור>` ו-`#studio/<קריאה>/<מקור>` (למשל `#studio/art/...` להשלמת קריאה 3), `#archive` ו-`#archive/<אופן>`, `#s/<id>` מחקר.
-- `src/data.js`: טקסטים קבועים, שלושת האופנים (`MODES`), השלבים, קישורים ופרטי הפרויקט (`PROJECT`) שמוצגים בכרטיס ההגדרות. `midjourney()` בונה פרומפט למידג'רני.
-- `src/components/`: `Nav.jsx` (סרגל עליון, כרטיס הגדרות מהלוגו), `Home.jsx` (השער), `Studio.jsx`, `Archive.jsx`, `Study.jsx`, `ui.jsx` (מסגרת תמונה עם קווי בנייה, תג אופן), `Series.jsx` (סדרת שלוש הקריאות של מקור), `PasteFrame.jsx`, `KeyMark.jsx`.
+- `src/data.js`: טקסטים קבועים, שלושת האופנים (`MODES`), השלבים, קישורים ופרטי הפרויקט (`PROJECT`), שהקישורים שבהם מוצגים בכפתור הלוגו A&I. `midjourney()` בונה פרומפט למידג'רני.
+- `src/components/`: `Nav.jsx` (סרגל עליון וכפתור הלוגו A&I, `AIMenu.jsx`), `Home.jsx` (השער), `Studio.jsx`, `Archive.jsx`, `Study.jsx`, `ui.jsx` (מסגרת תמונה עם קווי בנייה, תג אופן), `Series.jsx` (סדרת שלוש הקריאות של מקור), `PasteFrame.jsx`, `KeyMark.jsx`.
 - `src/lib/supabase.js`: כל הגישה ל-Supabase.
 - `public/`: `logo.png` (הלוגו של ענת), `icons/` (אייקון האפליקציה: חדר, מרידיאן ושורות טקסט, בלי אותיות), `manifest.webmanifest`, `sw.js`.
 
@@ -57,3 +57,6 @@
 
 ## מיזוג
 - ענת אישרה באופן קבוע: אחרי בדיקה ירוקה, למזג כל PR ל-main בלי לשאול.
+
+## A&I logo button
+The top bar holds only the app name (links home), content navigation, and ONE logo button "אד' ענת שטיבלמן A&I" (`<ai-menu>` from https://appofapp-gh.vercel.app/ai-menu.js). Every editing and development action (העתקת קישור, שיחת הפיתוח, פרויקט המחקר, התקנת האפליקציה, edit mode, add, delete) lives only inside it, never as loose buttons. Standard: https://github.com/Anat1969/AppOfApp-GH/blob/main/docs/ai-menu-standard.md

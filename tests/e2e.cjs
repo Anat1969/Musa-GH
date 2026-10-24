@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 // בדיקת קצה לקצה: npm run build, npx vite preview --port 4173, ואז node tests/e2e.cjs
 // כל קריאות Supabase במוק עם מאגר בזיכרון. צילומי מסך ב-tests/out (לא בריפו).
-const S = path.join(__dirname, 'out'), U = 'http://localhost:4173/';
+const S = path.join(__dirname, 'out'), U = `http://localhost:${process.env.PORT || 4173}/`;
 fs.mkdirSync(S, { recursive: true });
 const SB = 'https://ktqmwpbzcnzkhjskqisy.supabase.co';
 const IMG = path.join(__dirname, 'fixtures');
@@ -28,6 +28,8 @@ const seed = () => {
 };
 
 function mock(ctx, db, log) {
+  // AI_MENU_JS: a local copy of the shared A&I menu, for runs where appofapp-gh.vercel.app is unreachable.
+  if (process.env.AI_MENU_JS) ctx.route('https://appofapp-gh.vercel.app/ai-menu.js', r => r.fulfill({ path: process.env.AI_MENU_JS, contentType: 'application/javascript' }));
   return ctx.route(`${SB}/**`, async (route, req) => {
     const url = new URL(req.url()), p = url.pathname, m = req.method();
     const cors = { 'access-control-allow-origin': '*', 'content-type': 'application/json' };
@@ -126,16 +128,18 @@ function mock(ctx, db, log) {
     await p.screenshot({ path: `${S}/${name}-home-full.png`, fullPage: true });
 
     // כרטיס ההגדרות מהלוגו
-    await p.click('[data-act=settings]'); await p.waitForTimeout(300);
-    const card = p.locator('.settings-card');
+    (await p.locator('.topbar ai-menu .logo').isVisible()) ? ok('A&I logo button in the top bar') : bad('no A&I logo');
+    !(await p.locator('.topbar >> text=העתקת קישור').first().isVisible().catch(() => false)) ? ok('no loose development buttons in the bar') : bad('loose buttons');
+    await p.click('ai-menu .logo'); await p.waitForTimeout(300);
+    const card = p.locator('ai-menu .panel');
     const ct = await card.innerText();
-    ['העתקת קישור', 'שיחת הפיתוח', 'פרויקט המחקר', 'התקנת האפליקציה', 'cultura-GH', 'musa-generate', 'ANTHROPIC_API_KEY'].every(s => ct.includes(s)) ? ok('settings card: actions + project details') : bad('settings card ' + ct);
-    const cb = await card.boundingBox(); cb.x >= 0 && cb.x + cb.width <= vp.width ? ok('card inside viewport') : bad('card overflow');
-    await card.locator('[data-testid=copy]').click(); await p.waitForTimeout(200);
+    ['העתקת קישור', 'שיחת הפיתוח', 'התקנת האפליקציה', 'ריפו ב-GitHub', 'פרויקט Supabase', 'פריסה'].every(s => ct.includes(s)) ? ok('A&I menu: actions + project links') : bad('A&I menu ' + ct);
+    const cb = await card.boundingBox(); cb.x >= 0 && cb.x + cb.width <= vp.width ? ok('menu inside viewport') : bad('menu overflow');
+    await card.getByRole('menuitem', { name: 'העתקת קישור' }).click(); await p.waitForTimeout(200);
     (await p.evaluate(() => navigator.clipboard.readText())).startsWith(U) ? ok('copy link') : bad('copy');
     await p.screenshot({ path: `${S}/${name}-settings.png` });
     await p.keyboard.press('Escape'); await p.waitForTimeout(700);
-    (await p.locator('.settings-card').count()) === 0 ? ok('esc closes card') : bad('card open');
+    !(await card.isVisible()) ? ok('esc closes menu') : bad('menu open');
 
     // ניווט בטאבים
     await p.click('.tab:has-text("ארכיון")'); await p.waitForTimeout(900);
